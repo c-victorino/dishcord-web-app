@@ -1,6 +1,8 @@
 // const { rejects } = require("assert");
 // const { resolve } = require("path");
+const { rejects } = require("assert");
 const fs = require("fs");
+const { resolve } = require("path");
 let posts = [];
 let categories = [];
 
@@ -52,9 +54,47 @@ function getCategories() {
   });
 }
 
+function getPostsByCategory(category) {
+  return new Promise((resolve, reject) => {
+    const result = posts.filter((post) => category == post.category);
+    !result.length ? reject("no results returned") : resolve(result);
+  });
+}
+
+function getPostsByMinDate(minDateStr) {
+  return new Promise((resolve, reject) => {
+    const dateStr = new Date(minDateStr);
+    const result = posts.filter((post) => new Date(post.postDate) >= dateStr);
+    !result.length ? reject("no results returned") : resolve(result);
+  });
+}
+
+function getPostById(id) {
+  return new Promise((resolve, reject) => {
+    const result = posts.filter((post) => post.id == id);
+    !result.length ? reject("no results returned") : resolve(result);
+  });
+}
+
+function addPost(postData) {
+  return new Promise((resolve, reject) => {
+    if (Object.keys(postData).length === 0) {
+      reject("post data not found");
+    }
+    postData.published = postData.published !== undefined;
+    postData.id = posts.length + 1;
+    posts.push(postData);
+    resolve(postData);
+  });
+}
+
 module.exports = {
   initialize,
   getAllPosts,
   getPublishedPosts,
   getCategories,
+  getPostsByCategory,
+  getPostsByMinDate,
+  getPostById,
+  addPost,
 };
