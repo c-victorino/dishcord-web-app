@@ -18,6 +18,11 @@ const readJson = (filePath) => {
   });
 };
 
+function currentDate() {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+}
+
 function initialize() {
   return new Promise((resolve, reject) => {
     readJson("./data/posts.json")
@@ -71,7 +76,16 @@ function getPostsByMinDate(minDateStr) {
 
 function getPostById(id) {
   return new Promise((resolve, reject) => {
-    const result = posts.filter((post) => post.id == id);
+    const result = posts.filter((post) => post.id == id)[0];
+    !result ? reject("no results returned") : resolve(result);
+  });
+}
+
+function getPublishedPostsByCategory(category) {
+  return new Promise((resolve, reject) => {
+    const result = posts.filter(
+      (post) => post.published && post.category == category
+    );
     !result.length ? reject("no results returned") : resolve(result);
   });
 }
@@ -83,6 +97,7 @@ function addPost(postData) {
     }
     postData.published = postData.published !== undefined;
     postData.id = posts.length + 1;
+    postData.postDate = currentDate();
     posts.push(postData);
     resolve(postData);
   });
@@ -96,5 +111,6 @@ module.exports = {
   getPostsByCategory,
   getPostsByMinDate,
   getPostById,
+  getPublishedPostsByCategory,
   addPost,
 };
