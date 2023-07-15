@@ -1,105 +1,148 @@
-// const { rejects } = require("assert");
-// const { resolve } = require("path");
-const { rejects } = require("assert");
-const fs = require("fs");
-const { resolve } = require("path");
-let posts = [];
-let categories = [];
+const Sequelize = require("sequelize");
+const sequelize = new Sequelize(
+  "diofiijo",
+  "diofiijo",
+  "YkA73dsNL227-uMZ3wJM91RNRCsmz3B7",
+  {
+    host: "stampy.db.elephantsql.com",
+    dialect: "postgres",
+    port: 5432,
+    dialectOptions: {
+      ssl: { rejectUnauthorized: false },
+    },
+    query: { raw: true },
+  }
+);
 
-const readJson = (filePath) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, "utf8", (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(JSON.parse(data));
-      }
-    });
-  });
-};
+// Data Model
+const Post = sequelize.define("Post", {
+  body: Sequelize.TEXT,
+  title: Sequelize.STRING,
+  postDate: Sequelize.DATE,
+  featureImage: Sequelize.STRING,
+  published: Sequelize.BOOLEAN,
+});
 
-function currentDate() {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
-}
+// Data Model
+const Category = sequelize.define("Category", {
+  category: Sequelize.STRING,
+});
 
+// Post model gets a "category" column that will act as
+// a foreign key to the Category model
+Post.belongsTo(Category, { foreignKey: "category" });
+
+// ensure that we can connect to the DB and that our Post and
+// Category models are represented in the database as tables
 function initialize() {
-  return new Promise((resolve, reject) => {
-    readJson("./data/posts.json")
-      .then((fileData) => {
-        posts = fileData;
-        return readJson("./data/categories.json");
-      })
-      .then((fileData) => {
-        categories = fileData;
-        resolve();
-      })
-      .catch((err) => {
-        reject("unable to read file");
-      });
-  });
+  return sequelize
+    .sync()
+    .then(() => resolve())
+    .catch((err) => reject("unable to sync the database"));
 }
 
+// retrieves all posts from the PostgreSQL database
 function getAllPosts() {
-  return new Promise((resolve, reject) => {
-    !posts.length ? reject("no results returned") : resolve(posts);
+  return sequelize.sync().then(() => {
+    Post.findAll()
+      .then((posts) => resolve(posts))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// gets all post who's published val is set to true
 function getPublishedPosts() {
-  return new Promise((resolve, reject) => {
-    const result = posts.filter((post) => post.published);
-    !result.length ? reject("no results returned") : resolve(result);
+  return sequelize.sync().then(() => {
+    Post.findAll({
+      where: { published: true },
+    })
+      .then((data) => resolve(data))
+      .catch((err) => reject("unable to create post"));
   });
 }
 
+// Retrieves all categories from the PostgreSQL database
 function getCategories() {
-  return new Promise((resolve, reject) => {
-    !posts.length ? reject("no results returned") : resolve(categories);
+  return sequelize.sync().then(() => {
+    Category.findAll()
+      .then((data) => resolve(data))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// get post who's category value is the value passed to the function
 function getPostsByCategory(category) {
-  return new Promise((resolve, reject) => {
-    const result = posts.filter((post) => category == post.category);
-    !result.length ? reject("no results returned") : resolve(result);
+  return sequelize.sync().then(() => {
+    Post.findAll({
+      where: {
+        category,
+      },
+    })
+      .then((posts) => resolve(posts))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// get post that contains postDate value greater than or equal to the minDateStr
 function getPostsByMinDate(minDateStr) {
-  return new Promise((resolve, reject) => {
-    const dateStr = new Date(minDateStr);
-    const result = posts.filter((post) => new Date(post.postDate) >= dateStr);
-    !result.length ? reject("no results returned") : resolve(result);
+  return sequelize.sync().then(() => {
+    const { gte } = Sequelize.Op;
+    Post.findAll({
+      where: {
+        postDate: {
+          [gte]: new Date(minDateStr),
+        },
+      },
+    })
+      .then((data) => resolve(data))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// get post who's id value is the value passed to the function
 function getPostById(id) {
-  return new Promise((resolve, reject) => {
-    const result = posts.filter((post) => post.id == id)[0];
-    !result ? reject("no results returned") : resolve(result);
+  return sequelize.sync().then(() => {
+    Post.findAll({
+      where: { id },
+    })
+      .then((data) => resolve(data[0]))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// filter the results by "published" & "category"
+// (using the value true for "published" & the value passed to the function
 function getPublishedPostsByCategory(category) {
-  return new Promise((resolve, reject) => {
-    const result = posts.filter(
-      (post) => post.published && post.category == category
-    );
-    !result.length ? reject("no results returned") : resolve(result);
+  return sequelize.sync().then(() => {
+    Post.findAll({
+      where: {
+        published: true,
+        category: category,
+      },
+    })
+      .then((data) => resolve(data))
+      .catch((err) => reject("no results returned"));
   });
 }
 
+// saves the postData to a PostgreSQL database
 function addPost(postData) {
-  return new Promise((resolve, reject) => {
-    if (Object.keys(postData).length === 0) {
-      reject("post data not found");
+  return sequelize.sync().then(() => {
+    // Ensure value is correct when user toggled or not the
+    // published property in the form
+    postData.published = postData.published ? true : false;
+    for (let key in postData) {
+      // make any blank values be null when user did not input a value on a field
+      if (postData[key] === "") {
+        postData[key] = null;
+      }
     }
-    postData.published = postData.published !== undefined;
-    postData.id = posts.length + 1;
-    postData.postDate = currentDate();
-    posts.push(postData);
-    resolve(postData);
+    // assign postDate val as current date when posted
+    postData.postDate = new Date();
+
+    Post.create(postData)
+      .then((data) => resolve(data))
+      .catch((err) => "unable to create post");
   });
 }
 

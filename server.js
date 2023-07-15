@@ -52,6 +52,15 @@ app.engine(
       safeHTML: function (context) {
         return stripJs(context);
       },
+
+      // formatDate to keep dates formatting consistent in views.
+      // {{#formatDate postDate}}{{/formatDate}}
+      formatDate: function (dateObj) {
+        let year = dateObj.getFullYear();
+        let month = (dateObj.getMonth() + 1).toString();
+        let day = dateObj.getDate().toString();
+        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      },
     },
   })
 );
@@ -66,9 +75,9 @@ function onHttpStart() {
 }
 
 cloudinary.config({
-  cloud_name: "",
-  api_key: "",
-  api_secret: "-",
+  cloud_name: "dujgmgpvq",
+  api_key: "494927485573586",
+  api_secret: "oldXgv5-41RCrw7sYig-OG75qSo",
   secure: true,
 });
 
