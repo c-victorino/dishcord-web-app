@@ -141,7 +141,7 @@ function getPublishedPostsByCategory(category) {
   });
 }
 
-// saves the postData to a PostgreSQL database
+// create and saves the postData to a PostgreSQL database
 function addPost(postData) {
   return new Promise((resolve, reject) => {
     sequelize.sync().then(() => {
@@ -159,7 +159,51 @@ function addPost(postData) {
 
       Post.create(postData)
         .then((data) => resolve(data))
-        .catch((err) => "unable to create post");
+        .catch((err) => reject("unable to create post"));
+    });
+  });
+}
+
+// create and saves the categoryData to a PostgreSQL database
+function addCategory(categoryData) {
+  return new Promise((reject, resolve) => {
+    sequelize.sync().then(() => {
+      for (let key in categoryData) {
+        // ensure that any blank values in categoryData are set to null
+        if (categoryData[key] === "") {
+          categoryData[key] = null;
+        }
+      }
+
+      Category.create(categoryData)
+        .then((data) => resolve(data))
+        .catch((err) => reject("unable to create category"));
+    });
+  });
+}
+
+// deletes specific category by its id
+function deleteCategoryById(id) {
+  return new Promise((resolve, reject) => {
+    sequelize.sync().then(() => {
+      Category.destroy({
+        where: { id },
+      })
+        .then(() => resolve("destroyed"))
+        .catch((err) => reject("was rejected"));
+    });
+  });
+}
+
+// deletes specific Post by its id
+function deletePostById(id) {
+  return new Promise((resolve, reject) => {
+    sequelize.sync().then(() => {
+      Post.destroy({
+        where: { id },
+      })
+        .then(() => resolve("destroyed"))
+        .catch((err) => reject("was rejected"));
     });
   });
 }
@@ -174,4 +218,7 @@ module.exports = {
   getPostById,
   getPublishedPostsByCategory,
   addPost,
+  addCategory,
+  deleteCategoryById,
+  deletePostById,
 };

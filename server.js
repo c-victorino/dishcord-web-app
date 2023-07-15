@@ -151,10 +151,13 @@ app.get("/posts", (req, res) => {
       }
     })
     .then((result) => {
+      if (!result.length) {
+        return Promise.reject("no results");
+      }
       res.render("posts", { posts: result });
     })
     .catch((err) => {
-      res.render("posts", { message: "no results" });
+      res.render("posts", { message: err });
     });
 });
 
@@ -257,10 +260,13 @@ app.get("/categories", (req, res) => {
   blogService
     .getCategories()
     .then((data) => {
+      if (!data.length) {
+        return Promise.reject("no results");
+      }
       res.render("categories", { categories: data });
     })
     .catch((err) => {
-      res.render("categories", { message: "no results" });
+      res.render("categories", { message: err });
     });
 });
 
