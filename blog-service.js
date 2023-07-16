@@ -190,7 +190,9 @@ function deleteCategoryById(id) {
         where: { id },
       })
         .then(() => resolve("destroyed"))
-        .catch((err) => reject("was rejected"));
+        .catch((err) =>
+          reject("Unable to Remove Category / Category not found")
+        );
     });
   });
 }
@@ -203,7 +205,7 @@ function deletePostById(id) {
         where: { id },
       })
         .then(() => resolve("destroyed"))
-        .catch((err) => reject("was rejected"));
+        .catch((err) => reject("Unable to Remove Post / Post not found"));
     });
   });
 }

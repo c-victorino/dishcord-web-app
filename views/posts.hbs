@@ -31,6 +31,10 @@
               <td>{{postDate}}</td>
               <td><a href="/posts?category={{category}}">{{category}}</a></td>
               <td>{{published}}</td>
+              <td><a
+                  href="/post/delete/{{id}}"
+                  class="btn btn-danger"
+                >remove</a></td>
             </tr>
           {{/each}}
         </tbody>

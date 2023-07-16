@@ -8,6 +8,8 @@ const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
 const exphbs = require("express-handlebars");
 
+app.use(express.urlencoded({ extended: true }));
+
 app.use(function (req, res, next) {
   let route = req.path.substring(1);
 
@@ -173,7 +175,10 @@ app.get("/post/:id", (req, res) => {
 });
 
 app.get("/posts/add", (req, res) => {
-  res.render("addPost");
+  blogService
+    .getCategories()
+    .then((data) => res.render("addPost", { categories: data }))
+    .catch((err) => res.render("addPost", { categories: [] }));
 });
 
 app.post("/posts/add", upload.single("featureImage"), (req, res) => {
@@ -209,6 +214,14 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
   });
 });
 
+app.get("/posts/delete/:id", (req, res) => {
+  blogService
+    .deletePostById(req.body)
+    .then(() => res.redirect("/posts"))
+    .catch((err) => res.status(500).send(err));
+});
+
+// route blog
 app.get("/blog/:id", async (req, res) => {
   // Declare an object to store properties for the view
   let viewData = {};
@@ -256,6 +269,7 @@ app.get("/blog/:id", async (req, res) => {
   res.render("blog", { data: viewData });
 });
 
+// route categories
 app.get("/categories", (req, res) => {
   blogService
     .getCategories()
@@ -268,6 +282,24 @@ app.get("/categories", (req, res) => {
     .catch((err) => {
       res.render("categories", { message: err });
     });
+});
+
+app.get("/categories/add", (req, res) => {
+  res.render("addCategory");
+});
+
+app.post("/categories/add", (req, res) => {
+  blogService
+    .addCategory(req.body)
+    .then(() => redirect("/categories"))
+    .catch((err) => res.json({ message: err }));
+});
+
+app.get("/categories/delete/:id", (req, res) => {
+  blogService
+    .deleteCategoryById(req.body)
+    .then(() => res.redirect("/categories"))
+    .catch((err) => res.status(500).send(err));
 });
 
 app.use((req, res) => {
