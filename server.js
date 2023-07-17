@@ -182,27 +182,40 @@ app.get("/posts/add", (req, res) => {
 });
 
 app.post("/posts/add", upload.single("featureImage"), (req, res) => {
-  let streamUpload = (req) => {
-    return new Promise((resolve, reject) => {
-      let stream = cloudinary.uploader.upload_stream((error, result) => {
-        if (result) {
-          resolve(result);
-        } else {
-          reject(error);
-        }
+  if (req.file) {
+    let streamUpload = (req) => {
+      return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream((error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        });
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
       });
+    };
 
-      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    async function upload(req) {
+      let result = await streamUpload(req);
+      return result;
+    }
+
+    upload(req).then((uploaded) => {
+      req.body.featureImage = uploaded.url;
+      blogService
+        .addPost(req.body)
+        .then(() => {
+          res.redirect("/posts");
+        })
+        .catch((err) => {
+          res.json({ message: err });
+        });
     });
-  };
-
-  async function upload(req) {
-    let result = await streamUpload(req);
-    return result;
-  }
-
-  upload(req).then((uploaded) => {
-    req.body.featureImage = uploaded.url;
+  } else {
+    // Handle the case when no image is uploaded
+    req.body.featureImage = null;
     blogService
       .addPost(req.body)
       .then(() => {
@@ -211,12 +224,12 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
       .catch((err) => {
         res.json({ message: err });
       });
-  });
+  }
 });
 
 app.get("/posts/delete/:id", (req, res) => {
   blogService
-    .deletePostById(req.body)
+    .deletePostById(req.params.id)
     .then(() => res.redirect("/posts"))
     .catch((err) => res.status(500).send(err));
 });
@@ -291,13 +304,13 @@ app.get("/categories/add", (req, res) => {
 app.post("/categories/add", (req, res) => {
   blogService
     .addCategory(req.body)
-    .then(() => redirect("/categories"))
+    .then(() => res.redirect("/categories"))
     .catch((err) => res.json({ message: err }));
 });
 
 app.get("/categories/delete/:id", (req, res) => {
   blogService
-    .deleteCategoryById(req.body)
+    .deleteCategoryById(req.params.id)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.status(500).send(err));
 });

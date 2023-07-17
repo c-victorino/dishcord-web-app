@@ -166,19 +166,17 @@ function addPost(postData) {
 
 // create and saves the categoryData to a PostgreSQL database
 function addCategory(categoryData) {
-  return new Promise((reject, resolve) => {
-    sequelize.sync().then(() => {
-      for (let key in categoryData) {
-        // ensure that any blank values in categoryData are set to null
-        if (categoryData[key] === "") {
-          categoryData[key] = null;
-        }
+  return new Promise((resolve, reject) => {
+    for (let key in categoryData) {
+      // ensure that any blank values in categoryData are set to null
+      if (categoryData[key] === "") {
+        categoryData[key] = null;
       }
+    }
 
-      Category.create(categoryData)
-        .then((data) => resolve(data))
-        .catch((err) => reject("unable to create category"));
-    });
+    Category.create(categoryData)
+      .then((data) => resolve(data))
+      .catch((err) => reject("unable to create category"));
   });
 }
 
