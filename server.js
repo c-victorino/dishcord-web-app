@@ -47,49 +47,52 @@ app.use((req, res, next) => {
   next();
 });
 
-// Handlebars configuration
+// Handlebars configuration and helper functions
+const navLink = function (url, options) {
+  return (
+    "<li" +
+    (url == app.locals.activeRoute ? ' class="active" ' : "") +
+    '><a href="' +
+    url +
+    '">' +
+    options.fn(this) +
+    "</a></li>"
+  );
+};
+
+const equal = function (lvalue, rvalue, options) {
+  if (arguments.length < 3)
+    throw new Error("Handlebars Helper equal needs 2 parameters");
+
+  return lvalue != rvalue ? options.inverse(this) : options.fn(this);
+};
+
+const safeHTML = function (context) {
+  return stripJs(context);
+};
+
+// formatDate to keep dates formatting consistent in views.
+// {{#formatDate postDate}}{{/formatDate}}
+const formatDate = function (dateObj) {
+  const year = dateObj.getFullYear();
+  const month = (dateObj.getMonth() + 1).toString();
+  const day = dateObj.getDate().toString();
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+};
+
 app.engine(
   ".hbs",
   exphbs.engine({
     extname: ".hbs",
     helpers: {
-      navLink: function (url, options) {
-        return (
-          "<li" +
-          (url == app.locals.activeRoute ? ' class="active" ' : "") +
-          '><a href="' +
-          url +
-          '">' +
-          options.fn(this) +
-          "</a></li>"
-        );
-      },
-
-      equal: function (lvalue, rvalue, options) {
-        if (arguments.length < 3)
-          throw new Error("Handlebars Helper equal needs 2 parameters");
-        if (lvalue != rvalue) {
-          return options.inverse(this);
-        } else {
-          return options.fn(this);
-        }
-      },
-
-      safeHTML: function (context) {
-        return stripJs(context);
-      },
-
-      // formatDate to keep dates formatting consistent in views.
-      // {{#formatDate postDate}}{{/formatDate}}
-      formatDate: function (dateObj) {
-        let year = dateObj.getFullYear();
-        let month = (dateObj.getMonth() + 1).toString();
-        let day = dateObj.getDate().toString();
-        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-      },
+      navLink,
+      equal,
+      safeHTML,
+      formatDate,
     },
   })
 );
+
 app.set("view engine", ".hbs");
 
 // cloudinary configuration
@@ -103,19 +106,10 @@ cloudinary.config({
 // multer setup
 const upload = multer(); // no { storage: storage } since we are not using disk storage
 
-// functions
-function onHttpStart() {
-  console.log("Express http server listening on " + HTTP_PORT);
-}
-
 // checks if a user is logged in. Can be used in any route that
 // needs to be protected against unauthenticated access
 function ensureLogin(req, res, next) {
-  if (!req.session.user) {
-    res.redirect("/login");
-  } else {
-    next();
-  }
+  !req.session.user ? res.redirect("/login") : next();
 }
 
 // routes
@@ -133,15 +127,6 @@ app.get("/blog", async (req, res) => {
   try {
     // declare empty array to hold "post" objects
     let posts = [];
-
-    // // if there's a "category" query, filter the returned posts by category
-    // if (req.query.category) {
-    //   // Obtain the published "posts" by category
-    //   posts = await blogService.getPublishedPostsByCategory(req.query.category);
-    // } else {
-    //   // Obtain the published "posts"
-    //   posts = await blogService.getPublishedPosts();
-    // }
 
     // if there's a "category" query, filter the returned posts by category
     // otherwise obtain the published "posts"
@@ -223,11 +208,7 @@ app.post(
       let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
           let stream = cloudinary.uploader.upload_stream((error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
+            result ? resolve(result) : reject(error);
           });
 
           streamifier.createReadStream(req.file.buffer).pipe(stream);
@@ -389,5 +370,10 @@ app.use((req, res) => res.status(404).render("404"));
 blogService
   .initialize()
   .then(authData.initialize)
-  .then((result) => app.listen(HTTP_PORT, onHttpStart))
+  .then((result) =>
+    app.listen(
+      HTTP_PORT,
+      console.log("Express http server listening on " + HTTP_PORT)
+    )
+  )
   .catch((error) => console.log(error));
