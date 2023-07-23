@@ -1,3 +1,5 @@
+const authData = require("./auth-service.js");
+const clientSessions = require("client-sessions");
 const express = require("express");
 const app = express();
 const exphbs = require("express-handlebars");
@@ -27,6 +29,23 @@ app.use(function (req, res, next) {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
+
+// client-sessions configuration
+app.use(
+  clientSessions({
+    cookieName: "session", // this is the object name that will be added to 'req'
+    secret: "week10example_web322", // this should be a long un-guessable string.
+    duration: 2 * 60 * 1000, // duration of the session in milliseconds (2 minutes)
+    activeDuration: 1000 * 60, // the session will be extended by this many ms each request (1 minute)
+  })
+);
+
+// used to conditionally hide/show elements to the user
+// depending on whether they're currently logged in
+app.use((req, res, next) => {
+  res.locals.session = req.session;
+  next();
+});
 
 // Handlebars configuration
 app.engine(
@@ -84,9 +103,19 @@ cloudinary.config({
 // multer setup
 const upload = multer(); // no { storage: storage } since we are not using disk storage
 
-// handle HTTP server start
+// functions
 function onHttpStart() {
   console.log("Express http server listening on " + HTTP_PORT);
+}
+
+// checks if a user is logged in. Can be used in any route that
+// needs to be protected against unauthenticated access
+function ensureLogin(req, res, next) {
+  if (!req.session.user) {
+    res.redirect("/login");
+  } else {
+    next();
+  }
 }
 
 // routes
@@ -105,14 +134,20 @@ app.get("/blog", async (req, res) => {
     // declare empty array to hold "post" objects
     let posts = [];
 
+    // // if there's a "category" query, filter the returned posts by category
+    // if (req.query.category) {
+    //   // Obtain the published "posts" by category
+    //   posts = await blogService.getPublishedPostsByCategory(req.query.category);
+    // } else {
+    //   // Obtain the published "posts"
+    //   posts = await blogService.getPublishedPosts();
+    // }
+
     // if there's a "category" query, filter the returned posts by category
-    if (req.query.category) {
-      // Obtain the published "posts" by category
-      posts = await blogService.getPublishedPostsByCategory(req.query.category);
-    } else {
-      // Obtain the published "posts"
-      posts = await blogService.getPublishedPosts();
-    }
+    // otherwise obtain the published "posts"
+    posts = req.query.category
+      ? await blogService.getPublishedPostsByCategory(req.query.category)
+      : await blogService.getPublishedPosts();
 
     // sort the published posts by postDate
     posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
@@ -142,7 +177,7 @@ app.get("/blog", async (req, res) => {
 });
 
 // route posts / post
-app.get("/posts", (req, res) => {
+app.get("/posts", ensureLogin, (req, res) => {
   const category = req.query.category;
   const minDateStr = req.query.minDate;
   blogService
@@ -165,59 +200,64 @@ app.get("/posts", (req, res) => {
     .catch((err) => res.render("posts", { message: err }));
 });
 
-app.get("/post/:id", (req, res) => {
+app.get("/post/:id", ensureLogin, (req, res) => {
   blogService
     .getPostById(req.params.id)
     .then((result) => res.json(result))
     .catch((err) => res.json({ message: err }));
 });
 
-app.get("/posts/add", (req, res) => {
+app.get("/posts/add", ensureLogin, (req, res) => {
   blogService
     .getCategories()
     .then((data) => res.render("addPost", { categories: data }))
     .catch((err) => res.render("addPost", { categories: [] }));
 });
 
-app.post("/posts/add", upload.single("featureImage"), (req, res) => {
-  if (req.file) {
-    let streamUpload = (req) => {
-      return new Promise((resolve, reject) => {
-        let stream = cloudinary.uploader.upload_stream((error, result) => {
-          if (result) {
-            resolve(result);
-          } else {
-            reject(error);
-          }
+app.post(
+  "/posts/add",
+  ensureLogin,
+  upload.single("featureImage"),
+  (req, res) => {
+    if (req.file) {
+      let streamUpload = (req) => {
+        return new Promise((resolve, reject) => {
+          let stream = cloudinary.uploader.upload_stream((error, result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(error);
+            }
+          });
+
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
         });
+      };
 
-        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      async function upload(req) {
+        let result = await streamUpload(req);
+        return result;
+      }
+
+      upload(req).then((uploaded) => {
+        req.body.featureImage = uploaded.url;
+        blogService
+          .addPost(req.body)
+          .then(() => res.redirect("/posts"))
+          .catch((err) => res.json({ message: err }));
       });
-    };
-
-    async function upload(req) {
-      let result = await streamUpload(req);
-      return result;
-    }
-
-    upload(req).then((uploaded) => {
-      req.body.featureImage = uploaded.url;
+    } else {
+      // Handle the case when no image is uploaded
+      req.body.featureImage = null;
       blogService
         .addPost(req.body)
         .then(() => res.redirect("/posts"))
         .catch((err) => res.json({ message: err }));
-    });
-  } else {
-    // Handle the case when no image is uploaded
-    req.body.featureImage = null;
-    blogService
-      .addPost(req.body)
-      .then(() => res.redirect("/posts"))
-      .catch((err) => res.json({ message: err }));
+    }
   }
-});
+);
 
-app.get("/posts/delete/:id", (req, res) => {
+app.get("/posts/delete/:id", ensureLogin, (req, res) => {
   blogService
     .deletePostById(req.params.id)
     .then(() => res.redirect("/posts"))
@@ -270,7 +310,7 @@ app.get("/blog/:id", async (req, res) => {
 });
 
 // route categories
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin, (req, res) => {
   blogService
     .getCategories()
     .then((data) => {
@@ -282,20 +322,64 @@ app.get("/categories", (req, res) => {
     .catch((err) => res.render("categories", { message: err }));
 });
 
-app.get("/categories/add", (req, res) => res.render("addCategory"));
+app.get("/categories/add", ensureLogin, (req, res) =>
+  res.render("addCategory")
+);
 
-app.post("/categories/add", (req, res) => {
+app.post("/categories/add", ensureLogin, (req, res) => {
   blogService
     .addCategory(req.body)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.json({ message: err }));
 });
 
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id", ensureLogin, (req, res) => {
   blogService
     .deleteCategoryById(req.params.id)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.status(500).send(err));
+});
+
+// route login
+app.get("/login", (req, res) => res.render("login"));
+
+app.post("/login", (req, res) => {
+  req.body.userAgent = req.get("User-Agent");
+  authData
+    .checkUser(req.body)
+    .then((user) => {
+      req.session.user = {
+        userName: user.userName,
+        email: user.email,
+        loginHistory: user.loginHistory,
+      };
+
+      res.redirect("/posts");
+    })
+    .catch((err) =>
+      res.render("login", { errorMessage: err, userName: req.body.userName })
+    );
+});
+
+// route logout
+app.get("/logout", (req, res) => {
+  req.session.reset();
+  res.redirect("/");
+});
+
+// route userHistory
+app.get("/userHistory", ensureLogin, (req, res) => res.render("userHistory"));
+
+// route register
+app.get("/register", (req, res) => res.render("register"));
+
+app.post("/register", (req, res) => {
+  authData
+    .registerUser(req.body)
+    .then(() => res.render("register", { successMessage: "User created" }))
+    .catch((err) =>
+      res.render("register", { errorMessage: err, userName: req.body.userName })
+    );
 });
 
 // handle unknown routes
@@ -304,5 +388,6 @@ app.use((req, res) => res.status(404).render("404"));
 // server start
 blogService
   .initialize()
+  .then(authData.initialize)
   .then((result) => app.listen(HTTP_PORT, onHttpStart))
   .catch((error) => console.log(error));
