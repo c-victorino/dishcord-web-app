@@ -14,27 +14,27 @@ const HTTP_PORT = process.env.PORT || 8080;
 // middleware
 app.use(express.urlencoded({ extended: true }));
 
+// updates app.locals with the active route and viewing category,
+// enabling dynamic rendering of navigation elements and content in views/templates.
 app.use(function (req, res, next) {
   let route = req.path.substring(1);
-
   app.locals.activeRoute =
     "/" +
     (isNaN(route.split("/")[1])
       ? route.replace(/\/(?!.*)/, "")
       : route.replace(/\/(.*)/, ""));
-
   app.locals.viewingCategory = req.query.category;
-
   next();
 });
 
+// static folder
 app.use(express.static(path.join(__dirname, "public")));
 
 // client-sessions configuration
 app.use(
   clientSessions({
     cookieName: "session", // this is the object name that will be added to 'req'
-    secret: "week10example_web322", // this should be a long un-guessable string.
+    secret: "", // this should be a long un-guessable string.
     duration: 2 * 60 * 1000, // duration of the session in milliseconds (2 minutes)
     activeDuration: 1000 * 60, // the session will be extended by this many ms each request (1 minute)
   })
@@ -48,6 +48,8 @@ app.use((req, res, next) => {
 });
 
 // Handlebars configuration and helper functions
+// automatically generates correct <li> element and adds class "active" if provided URL matches active route.
+// {{#navLink "/about"}}About{{/navLink}}
 const navLink = function (url, options) {
   return (
     "<li" +
@@ -60,13 +62,8 @@ const navLink = function (url, options) {
   );
 };
 
-const equal = function (lvalue, rvalue, options) {
-  if (arguments.length < 3)
-    throw new Error("Handlebars Helper equal needs 2 parameters");
-
-  return lvalue != rvalue ? options.inverse(this) : options.fn(this);
-};
-
+// removes unwanted JavaScript code from post body string by using a custom package: strip-js
+// {{#safeHTML someString}}{{/safeHTML}}
 const safeHTML = function (context) {
   return stripJs(context);
 };
@@ -86,7 +83,6 @@ app.engine(
     extname: ".hbs",
     helpers: {
       navLink,
-      equal,
       safeHTML,
       formatDate,
     },
@@ -97,9 +93,9 @@ app.set("view engine", ".hbs");
 
 // cloudinary configuration
 cloudinary.config({
-  cloud_name: "dujgmgpvq",
-  api_key: "494927485573586",
-  api_secret: "oldXgv5-41RCrw7sYig-OG75qSo",
+  cloud_name: "",
+  api_key: "",
+  api_secret: "",
   secure: true,
 });
 
@@ -253,14 +249,12 @@ app.get("/blog/:id", async (req, res) => {
   try {
     // declare empty array to hold "post" objects
     let posts = [];
+
     // if there's a "category" query, filter the returned posts by category
-    if (req.query.category) {
-      // Obtain the published "posts" by category
-      posts = await blogService.getPublishedPostsByCategory(req.query.category);
-    } else {
-      // Obtain the published "posts"
-      posts = await blogService.getPublishedPosts();
-    }
+    // otherwise obtain the published "posts"
+    posts = req.query.category
+      ? await blogService.getPublishedPostsByCategory(req.query.category)
+      : await blogService.getPublishedPosts();
 
     // sort the published posts by postDate
     posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));

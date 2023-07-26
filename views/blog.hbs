@@ -9,12 +9,12 @@
           style="width:100%"
         />
         <br /><br />
-        {{data.post.body}}
+        {{#safeHTML data.post.body}}{{/safeHTML}}
         <br /><br />
         <strong>Category:</strong>
         {{data.post.category}}<br />
         <strong>Last Updated:</strong>
-        {{data.post.postDate}}
+        {{#formatDate data.post.postDate}}{{/formatDate}}
 
       </article>
     {{else}}

@@ -21,7 +21,7 @@
             <tr>
               <th scope="row">{{id}}</th>
               <td>{{title}}</td>
-              <td>{{postDate}}</td>
+              <td>{{#formatDate postDate}}{{/formatDate}}</td>
               <td><a href="/posts?category={{category}}">{{category}}</a></td>
               <td>{{published}}</td>
               <td><a

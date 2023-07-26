@@ -1,19 +1,16 @@
 const NO_RESULTS = "no results returned"; // reject message
 const Sequelize = require("sequelize");
-const sequelize = new Sequelize(
-  "diofiijo",
-  "diofiijo",
-  "YkA73dsNL227-uMZ3wJM91RNRCsmz3B7",
-  {
-    host: "stampy.db.elephantsql.com",
-    dialect: "postgres",
-    port: 5432,
-    dialectOptions: {
-      ssl: { rejectUnauthorized: false },
-    },
-    query: { raw: true },
-  }
-);
+
+// set up sequelize to point to a postgres database
+const sequelize = new Sequelize("database", "user", "password", {
+  host: "host",
+  dialect: "postgres",
+  port: 5432,
+  dialectOptions: {
+    ssl: { rejectUnauthorized: false },
+  },
+  query: { raw: true },
+});
 
 // Data Model
 const Post = sequelize.define("Post", {
