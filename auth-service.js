@@ -19,9 +19,7 @@ let User;
 
 function initialize() {
   return new Promise(function (resolve, reject) {
-    const db = mongoose.createConnection(
-      "mongodb+srv://jcdv:z4RObaaPYJiA1xxm@senecaweb.kvzhc3r.mongodb.net/web322_app"
-    );
+    const db = mongoose.createConnection("");
 
     // reject the promise with the provided error
     db.on("error", (err) => reject(err));
