@@ -4,7 +4,7 @@
 
 The Web Blog Site is a full-stack web application that was develop as a learning process, to explore the depths of full-stack technologies. Note that it is not intended to be an actual service. The application allows registered users to create, view, and manage blog posts in a user-friendly interface, while unregistered visitors can freely browse all posts. It provides a seamless experience for both readers and registered writers, with features like user authentication, post creation, post categories, and a responsive layout.
 
-Visit the live project [here](https://zany-dove-baseball-cap.cyclic.app/blog), which is hosted on Cyclic.
+Visit the live project [here](https://zany-dove-baseball-cap.cyclic.app/about), which is hosted on Cyclic. Do allow a few seconds for the site to load as it is hosted on a free service.
 
 ## Technologies / Libraries
 
@@ -13,6 +13,7 @@ Visit the live project [here](https://zany-dove-baseball-cap.cyclic.app/blog), w
 - cloudinary
 - express
 - express-handlebars
+- JavaScript
 - mongoose
 - multer
 - Node.js
@@ -21,6 +22,12 @@ Visit the live project [here](https://zany-dove-baseball-cap.cyclic.app/blog), w
 - sequelize
 - streamifier
 - strip-js
+
+## Database / Media Management
+
+- Database Hosting: ElephantSQL (PostgreSQL)
+- Database: MongoDB (NoSQL)
+- Media Management: Cloudinary
 
 ## Features
 
