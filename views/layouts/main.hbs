@@ -17,7 +17,7 @@
   <body>
 
     <header>
-      <nav class="navbar navbar-expand-lg navbar-light my-2 mb-2 mb-lg-5">
+      <nav class="navbar navbar-expand-lg navbar-light absolute-nav">
         <div class="container-fluid px-lg-5">
           <a class="navbar-brand fs-4" href="/">
             DishC<i class="fas fa-cookie-bite"></i>rd
@@ -66,10 +66,11 @@
                 class="navbar-nav justify-content-center align-items-center flex-grow-1 gap-2"
               >
                 {{#navLink "/home"}}Home{{/navLink}}
-                {{#navLink "/categories"}}Categories{{/navLink}}
+                {{#navLink "/blog"}}Blog{{/navLink}}
 
                 {{#if session.user}}
                   {{#navLink "/posts"}}Posts{{/navLink}}
+                  {{#navLink "/categories"}}Categories{{/navLink}}
                 {{/if}}
 
                 {{#navLink "/about"}}About{{/navLink}}

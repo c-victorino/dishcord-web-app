@@ -1,0 +1,13 @@
+// Navbar
+a.active {
+  color: var(--bs-secondary) !important;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.absolute-nav {
+  position: absolute;
+  top: 10;
+  width: 100%;
+  z-index: 1000;
+}
