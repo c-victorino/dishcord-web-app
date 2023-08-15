@@ -1,49 +1,67 @@
-<div class="row">
-  <div class="col-md-12">
+<section class="vh-100">
+  <div class="container h-100 d-flex justify-content-center align-items-center">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-sm">
+          <div class="row g-0">
+            <div class="d-none d-md-block col-5">
+              <img
+                src="/images/login.jpg"
+                class="img-fluid rounded-start"
+                alt="..."
+              />
+            </div>
+            <div class="col col-md-7 align-self-center">
+              <div class="card-body">
+                <h5 class="card-title">Welcome back!</h5>
+                {{#if errorMessage}}
+                  <div class="alert alert-danger">
+                    <strong>Error:</strong>
+                    {{errorMessage}}</div>
+                {{/if}}
 
-    <h2>Log In</h2>
-    <hr />
+                <form method="post" action="/login">
+                  <div class="mb-3">
+                    <input
+                      class="form-control border border-dark"
+                      id="userName"
+                      name="userName"
+                      type="text"
+                      placeholder="Enter user name"
+                      required
+                      value="{{userName}}"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <input
+                      class="form-control border border-dark"
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="Enter password"
+                      required
+                    />
+                  </div>
 
-    {{#if errorMessage}}
-      <div class="alert alert-danger">
-        <strong>Error:</strong>
-        {{errorMessage}}</div>
-    {{/if}}
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    value="Login"
+                  >Login <i class="fa-solid fa-right-to-bracket"></i></button>
 
-    <form method="post" action="/login">
+                </form>
 
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <input
-              class="form-control"
-              id="userName"
-              name="userName"
-              type="text"
-              placeholder="User Name"
-              required
-              value="{{userName}}"
-            />
+                <p class="text-center mt-5">Don't have an account?
+                  <a href="/register" class="text-primary-50 fw-bold">Register
+                    Now</a>
+                </p>
+
+              </div>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <input
-              class="form-control"
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Password"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <input type="submit" class="btn btn-success pull-right" value="Login" />
-    </form>
   </div>
-</div>
+</section>
