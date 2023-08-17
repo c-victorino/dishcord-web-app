@@ -52,13 +52,12 @@ app.use((req, res, next) => {
 // {{#navLink "/about"}}About{{/navLink}}
 const navLink = function (url, options) {
   return (
-    "<li" +
-    (url == app.locals.activeRoute ? ' class="active" ' : "") +
-    '><a href="' +
-    url +
-    '">' +
-    options.fn(this) +
-    "</a></li>"
+    `<li class="nav-item">` +
+    `<a href="${url}"` +
+    (url == app.locals.activeRoute
+      ? ' class="nav-link active " '
+      : ' class="nav-link" ') +
+    `>${options.fn(this)}</a></li>`
   );
 };
 
