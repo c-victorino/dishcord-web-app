@@ -77,6 +77,13 @@ const formatDate = function (dateObj) {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 };
 
+const ifEquals = function (arg1, arg2, options) {
+  if (arg1 === arg2) {
+    // Render content inside the {{#ifEquals}} block
+    return options.fn(this);
+  }
+};
+
 app.engine(
   ".hbs",
   exphbs.engine({
@@ -85,6 +92,7 @@ app.engine(
       navLink,
       safeHTML,
       formatDate,
+      ifEquals,
     },
   })
 );
@@ -105,12 +113,15 @@ const upload = multer(); // no { storage: storage } since we are not using disk 
 // checks if a user is logged in. Can be used in any route that
 // needs to be protected against unauthenticated access
 function ensureLogin(req, res, next) {
+  // console.log(req.session.user);
   !req.session.user ? res.redirect("/login") : next();
 }
 
 // routes
 // home route
 app.get("/", (req, res) => res.redirect("/about"));
+
+app.get("/home", (req, res) => res.render("home"));
 
 // route about
 app.get("/about", (req, res) => res.render("about"));
@@ -159,15 +170,17 @@ app.get("/blog", async (req, res) => {
 
 // route posts / post
 app.get("/posts", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   const category = req.query.category;
   const minDateStr = req.query.minDate;
+
   blogService
-    .getAllPosts()
+    .getAllPosts(userId)
     .then((data) => {
       if (category) {
-        return blogService.getPostsByCategory(category);
+        return blogService.getPostsByCategory(category, userId);
       } else if (minDateStr) {
-        return blogService.getPostsByMinDate(minDateStr);
+        return blogService.getPostsByMinDate(minDateStr, userId);
       } else {
         return Promise.resolve(data);
       }
@@ -200,6 +213,7 @@ app.post(
   ensureLogin,
   upload.single("featureImage"),
   (req, res) => {
+    const userId = req.session.user.id.toString();
     if (req.file) {
       let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
@@ -219,7 +233,7 @@ app.post(
       upload(req).then((uploaded) => {
         req.body.featureImage = uploaded.url;
         blogService
-          .addPost(req.body)
+          .addPost(req.body, userId)
           .then(() => res.redirect("/posts"))
           .catch((err) => res.json({ message: err }));
       });
@@ -227,16 +241,36 @@ app.post(
       // Handle the case when no image is uploaded
       req.body.featureImage = null;
       blogService
-        .addPost(req.body)
+        .addPost(req.body, userId)
         .then(() => res.redirect("/posts"))
         .catch((err) => res.json({ message: err }));
     }
   }
 );
 
+app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
+  try {
+    const userId = req.session.user.id.toString();
+    const postId = req.params.id;
+
+    // Fetch post by ID
+    const post = await blogService.getPostById(postId);
+
+    // Fetch categories
+    const categories = await blogService.getCategories(userId);
+
+    // Render the template with the fetched post and categories
+
+    res.render("addPost", { update: post, categories: categories });
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 app.get("/posts/delete/:id", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   blogService
-    .deletePostById(req.params.id)
+    .deletePostById(req.params.id, userId)
     .then(() => res.redirect("/posts"))
     .catch((err) => res.status(500).send(err));
 });
@@ -287,7 +321,7 @@ app.get("/blog/:id", async (req, res) => {
 // route categories
 app.get("/categories", ensureLogin, (req, res) => {
   blogService
-    .getCategories()
+    .getCategories(req.session.user.id)
     .then((data) => {
       if (!data.length) {
         return Promise.reject("no results");
@@ -302,15 +336,17 @@ app.get("/categories/add", ensureLogin, (req, res) =>
 );
 
 app.post("/categories/add", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   blogService
-    .addCategory(req.body)
+    .addCategory(req.body, userId)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.json({ message: err }));
 });
 
 app.get("/categories/delete/:id", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   blogService
-    .deleteCategoryById(req.params.id)
+    .deleteCategoryById(req.params.id, userId)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.status(500).send(err));
 });
@@ -319,11 +355,12 @@ app.get("/categories/delete/:id", ensureLogin, (req, res) => {
 app.get("/login", (req, res) => res.render("login"));
 
 app.post("/login", (req, res) => {
-  req.body.userAgent = req.get("User-Agent");
+  // req.body.userAgent = req.get("User-Agent");
   authData
     .checkUser(req.body)
     .then((user) => {
       req.session.user = {
+        id: user._id.toString(),
         userName: user.userName,
         email: user.email,
         loginHistory: user.loginHistory,
