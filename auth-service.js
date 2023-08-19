@@ -1,3 +1,4 @@
+require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
@@ -19,7 +20,7 @@ let User;
 
 function initialize() {
   return new Promise(function (resolve, reject) {
-    const db = mongoose.createConnection("");
+    const db = mongoose.createConnection(process.env.MONGO_CONNECTION_STRING);
 
     // reject the promise with the provided error
     db.on("error", (err) => reject(err));

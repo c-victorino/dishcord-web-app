@@ -1,3 +1,4 @@
+require("dotenv").config();
 const authData = require("./auth-service.js");
 const clientSessions = require("client-sessions");
 const express = require("express");
@@ -33,8 +34,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // client-sessions configuration
 app.use(
   clientSessions({
-    cookieName: "session", // this is the object name that will be added to 'req'
-    secret: "", // this should be a long un-guessable string.
+    cookieName: "session", // object name that will be added to 'req'
+    secret: process.env.SESSION_SECRET,
     duration: 15 * 60 * 1000,
     activeDuration: 5 * 60 * 1000,
   })
@@ -92,9 +93,9 @@ app.set("view engine", ".hbs");
 
 // cloudinary configuration
 cloudinary.config({
-  cloud_name: "",
-  api_key: "",
-  api_secret: "",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
 

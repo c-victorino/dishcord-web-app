@@ -1,15 +1,14 @@
+require("dotenv").config();
 const NO_RESULTS = "no results returned"; // reject message
 const Sequelize = require("sequelize");
 
 // set up sequelize to point to a postgres database
-const sequelize = new Sequelize("database", "user", "password", {
-  host: "host",
-  dialect: "postgres",
-  port: 5432,
+const sequelize = new Sequelize(process.env.ELEPHANTSQL_CONNECTION_STRING, {
   dialectOptions: {
     ssl: { rejectUnauthorized: false },
   },
   query: { raw: true },
+  logging: false,
 });
 
 // Data Model
