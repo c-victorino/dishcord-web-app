@@ -16,13 +16,16 @@ const Post = sequelize.define("Post", {
   body: Sequelize.TEXT,
   title: Sequelize.STRING,
   postDate: Sequelize.DATE,
+  lastUpdate: Sequelize.DATE,
   featureImage: Sequelize.STRING,
   published: Sequelize.BOOLEAN,
+  userOrigin: Sequelize.STRING,
 });
 
 // Data Model
 const Category = sequelize.define("Category", {
   category: Sequelize.STRING,
+  userOrigin: Sequelize.STRING,
 });
 
 // Post model gets a "category" column that will act as
@@ -41,10 +44,13 @@ function initialize() {
 }
 
 // retrieves all posts from the PostgreSQL database
-function getAllPosts() {
+function getAllPosts(userId) {
   return new Promise((resolve, reject) => {
     Post.findAll()
-      .then((posts) => resolve(posts))
+      .then((posts) => {
+        posts.forEach((post) => (post.userOrigin = post.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -61,23 +67,34 @@ function getPublishedPosts() {
 }
 
 // Retrieves all categories from the PostgreSQL database
-function getCategories() {
+function getCategories(userId) {
   return new Promise((resolve, reject) => {
+    console.log("************************");
     Category.findAll()
-      .then((data) => resolve(data))
+      .then((categories) => {
+        // make true if user is the creator of the category
+        categories.forEach(
+          (obj) => (obj.userOrigin = obj.userOrigin === userId)
+        );
+
+        resolve(categories);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
 
 // get post who's category value is the value passed to the function
-function getPostsByCategory(category) {
+function getPostsByCategory(category, userId) {
   return new Promise((resolve, reject) => {
     Post.findAll({
       where: {
         category,
       },
     })
-      .then((posts) => resolve(posts))
+      .then((posts) => {
+        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -93,7 +110,10 @@ function getPostsByMinDate(minDateStr) {
         },
       },
     })
-      .then((data) => resolve(data))
+      .then((posts) => {
+        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -125,8 +145,9 @@ function getPublishedPostsByCategory(category) {
 }
 
 // create and saves the postData to a PostgreSQL database
-function addPost(postData) {
+function addPost(postData, userId) {
   return new Promise((resolve, reject) => {
+    console.log(postData);
     // Ensure value is correct when user toggled or not the
     // published property in the form
     postData.published = postData.published ? true : false;
@@ -136,8 +157,11 @@ function addPost(postData) {
         postData[key] = null;
       }
     }
+
     // assign postDate val as current date when posted
     postData.postDate = new Date();
+    // assign userOrigin as the userID
+    postData.userOrigin = userId;
 
     Post.create(postData)
       .then((data) => resolve(data))
@@ -146,14 +170,10 @@ function addPost(postData) {
 }
 
 // create and saves the categoryData to a PostgreSQL database
-function addCategory(categoryData) {
+function addCategory(categoryData, userId) {
   return new Promise((resolve, reject) => {
-    for (let key in categoryData) {
-      // ensure that any blank values in categoryData are set to null
-      if (categoryData[key] === "") {
-        categoryData[key] = null;
-      }
-    }
+    // adds the id of the creator of the category
+    categoryData.userOrigin = userId.toString();
 
     Category.create(categoryData)
       .then((data) => resolve(data))
@@ -162,10 +182,10 @@ function addCategory(categoryData) {
 }
 
 // deletes specific category by its id
-function deleteCategoryById(id) {
+function deleteCategoryById(id, userId) {
   return new Promise((resolve, reject) => {
     Category.destroy({
-      where: { id },
+      where: { id, userOrigin: userId },
     })
       .then(() => resolve("destroyed"))
       .catch((err) => reject("Unable to Remove Category / Category not found"));
@@ -173,10 +193,10 @@ function deleteCategoryById(id) {
 }
 
 // deletes specific Post by its id
-function deletePostById(id) {
+function deletePostById(id, userId) {
   return new Promise((resolve, reject) => {
     Post.destroy({
-      where: { id },
+      where: { id, userOrigin: userId },
     })
       .then(() => resolve("destroyed"))
       .catch((err) => reject("Unable to Remove Post / Post not found"));
