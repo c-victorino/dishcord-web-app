@@ -1,9 +1,7 @@
-// General
 hr {
   color: var(--bs-secondary);
 }
 
-// Navbar
 a.active {
   color: var(--bs-secondary) !important;
   text-decoration: underline;
@@ -17,12 +15,10 @@ a.active {
   z-index: 1000;
 }
 
-// Table
 th {
   color: var(--bs-white) !important;
 }
 
-// addPost Page
 .add-post input,
 .add-post textarea {
   border-color: var(--bs-secondary);

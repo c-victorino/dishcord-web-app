@@ -1,1 +1,37 @@
+// Font
+$font-family-sans-serif: "Playfair Display", serif;
+
+// Colors
+$light: #daecf6;
+$dark: #303633;
+$primary: #992e2f;
+$secondary: #6c6dca;
+$body-bg: $light;
+
+$navbar-light-color: $dark;
+$navbar-light-hover-color: $secondary;
+$link-active-color: $primary;
+
+// Table
+$table-variants: (
+  "secondary": $secondary,
+);
+
+// text
+$body-color: $dark;
+
+// Spacing
+$spacer: 1rem !default;
+$spacers: (
+  0: 0,
+  1: $spacer * 0.25,
+  2: $spacer * 0.5,
+  3: $spacer,
+  4: $spacer * 1.5,
+  5: $spacer * 3,
+  6: $spacer * 6,
+  7: $spacer * 8,
+  8: $spacer * 12,
+) !default;
+
 @import "../node_modules/bootstrap/scss/bootstrap";
