@@ -4,9 +4,11 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "watch": "nodemon server.js"
+    "compile:scss": "sass --no-source-map scss:public/css",
+    "watch:scss": "sass --no-source-map --watch scss:public/css",
+    "watch": "nodemon server.js",
+    "dev": "concurrently \"npm run watch\" \"npm run watch:scss\"",
+    "start": "npm run dev"
   },
   "author": "Carlo V.",
   "license": "ISC",
