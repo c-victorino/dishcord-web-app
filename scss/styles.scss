@@ -18,8 +18,12 @@ a.active {
 }
 
 // Table
-th {
+thead th {
   color: var(--bs-white) !important;
+}
+
+tbody {
+  color: var(--bs-dark);
 }
 
 // addPost Page

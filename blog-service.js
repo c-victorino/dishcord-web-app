@@ -69,7 +69,6 @@ function getPublishedPosts() {
 // Retrieves all categories from the PostgreSQL database
 function getCategories(userId) {
   return new Promise((resolve, reject) => {
-    console.log("************************");
     Category.findAll()
       .then((categories) => {
         // make true if user is the creator of the category
@@ -147,7 +146,6 @@ function getPublishedPostsByCategory(category) {
 // create and saves the postData to a PostgreSQL database
 function addPost(postData, userId) {
   return new Promise((resolve, reject) => {
-    console.log(postData);
     // Ensure value is correct when user toggled or not the
     // published property in the form
     postData.published = postData.published ? true : false;
@@ -167,6 +165,17 @@ function addPost(postData, userId) {
       .then((data) => resolve(data))
       .catch((err) => reject("unable to create post"));
   });
+}
+
+async function updatePost(postId, postData) {
+  try {
+    postData.lastUpdate = new Date();
+    postData.published = postData.published ? true : false;
+    await Post.update(postData, { where: { id: postId } });
+    // return { success: true, message: "Post updated successfully" };
+  } catch (err) {
+    throw err;
+  }
 }
 
 // create and saves the categoryData to a PostgreSQL database
@@ -203,6 +212,15 @@ function deletePostById(id, userId) {
   });
 }
 
+async function getPostOrigin(postId) {
+  try {
+    const origin = await Post.findByPk(postId, {
+      attributes: ["userOrigin"],
+    });
+    return origin ? origin.userOrigin : null;
+  } catch (err) {}
+}
+
 module.exports = {
   initialize,
   getAllPosts,
@@ -216,4 +234,6 @@ module.exports = {
   addCategory,
   deleteCategoryById,
   deletePostById,
+  getPostOrigin,
+  updatePost,
 };

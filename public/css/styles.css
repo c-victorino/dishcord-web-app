@@ -15,8 +15,12 @@ a.active {
   z-index: 1000;
 }
 
-th {
+thead th {
   color: var(--bs-white) !important;
+}
+
+tbody {
+  color: var(--bs-dark);
 }
 
 .add-post input,

@@ -239,6 +239,7 @@ app.post(
       });
     } else {
       // Handle the case when no image is uploaded
+      console.log(req.body);
       req.body.featureImage = null;
       blogService
         .addPost(req.body, userId)
@@ -260,12 +261,32 @@ app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
     const categories = await blogService.getCategories(userId);
 
     // Render the template with the fetched post and categories
-
-    res.render("addPost", { update: post, categories: categories });
+    res.render("addPost", { update: post, categories: categories, postId });
   } catch (err) {
     res.status(500).send(err);
   }
 });
+
+app.post(
+  "/posts/edit/:id",
+  ensureLogin,
+  upload.single("featureImage"),
+  (req, res) => {
+    blogService
+      .getPostOrigin(req.params.id)
+      .then((origin) => {
+        const userId = req.session.user.id.toString();
+        if (origin === userId) {
+          blogService
+            .updatePost(req.params.id, req.body)
+            .then(() => res.redirect("/"));
+        }
+      })
+      .catch((err) => console.log("Error in Update Post Root"));
+
+    // res.status(403).render("403");
+  }
+);
 
 app.get("/posts/delete/:id", ensureLogin, (req, res) => {
   const userId = req.session.user.id.toString();
