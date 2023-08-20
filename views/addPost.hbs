@@ -3,8 +3,11 @@
 
     <div class="row">
       <div class="col-md-12">
-        <h2>Add Post</h2>
-        <form method="post" action="{{#if update}}/posts/edit/{{postId}}{{else}}/posts/add{{/if}}" enctype="multipart/form-data">
+        <h2>{{#if update}}Edit Post{{else}}Add Post{{/if}}</h2>
+        <form
+          method="post" 
+          action="/posts{{#if update}}/edit/{{postId}}{{else}}/add{{/if}}" enctype="multipart/form-data">
+          
           {{! Image Upload }}
           <fieldset class="mb-3">
             <legend>Feature Image</legend>
@@ -29,7 +32,6 @@
               </div>
             {{else}}
               <p>No feature image was posted</p>
-
             {{/if}}
           </fieldset>
 
@@ -76,9 +78,11 @@
                       required
                     >
                       <option value="">Select Category</option>
-                      {{#each categories}}
-                        {{!-- {{#ifEquals id ../update.category}}selected{{/ifEquals}} --}}
-                        <option value="{{id}}">{{category}}</option>
+                      {{#each categories}}                       
+                        <option 
+                          value="{{id}}"
+                          {{#ifEquals id ../update.category}}selected{{/ifEquals}}
+                        >{{category}}</option>
                       {{/each}}
                     </select>
                   {{else}}
@@ -91,11 +95,15 @@
                 <div>
                   <label for="category">Visibility:</label>
                   <div class="checkbox pt-2">
+                    <input 
+                      type="checkbox" 
+                      name="published" 
+                      id="published" 
+                      {{#if update.published}}checked{{/if}}
+                    />
                     <label>
-                      {{!-- {{#if update.published}}checked{{/if}} --}}
-                      <input type="checkbox" name="published" id="published" />
                       Published
-                    </label>
+                    </label>                    
                   </div>
                 </div>
               </div>
@@ -103,7 +111,11 @@
           </fieldset>
 
           <hr />
-          <input type="submit" class="btn btn-primary" value="Add Post" />
+          <input 
+            type="submit" 
+            class="btn btn-primary" 
+            value={{#if update}}"Edit Post"{{else}}"Add Post"{{/if}}
+          />
         </form>
       </div>
     </div>
