@@ -3,6 +3,11 @@ hr {
   color: var(--bs-secondary);
 }
 
+// Icons
+.features i {
+  font-size: 2rem;
+}
+
 // Navbar
 a.active {
   color: var(--bs-secondary) !important;

@@ -2,6 +2,10 @@ hr {
   color: var(--bs-secondary);
 }
 
+.features i {
+  font-size: 2rem;
+}
+
 a.active {
   color: var(--bs-secondary) !important;
   text-decoration: underline;
