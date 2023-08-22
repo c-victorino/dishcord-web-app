@@ -128,37 +128,38 @@ app.get("/about", (req, res) => res.render("about"));
 
 // route blog
 app.get("/blog", async (req, res) => {
-  // Declare an object to store properties for the view
+  // Object to store properties for the view
   let viewData = {};
-
+  // Post Pagination
   try {
-    // declare empty array to hold "post" objects
-    let posts = [];
+    // Pagination setup
+    const postPerPage = 6;
+    const currentPage = req.query.page || 1;
+    const posts = req.query.category
+      ? await blogService.getPaginatedPostByCategory(postPerPage, currentPage)
+      : await blogService.getPaginatedPost(postPerPage, currentPage);
 
-    // if there's a "category" query, filter the returned posts by category
-    // otherwise obtain the published "posts"
-    posts = req.query.category
-      ? await blogService.getPublishedPostsByCategory(req.query.category)
-      : await blogService.getPublishedPosts();
+    // sort posts by most recent upload/update
+    posts.sort(
+      (a, b) =>
+        new Date(b.lastUpdate || b.postDate) -
+        new Date(a.lastUpdate || a.postDate)
+    );
 
-    // sort the published posts by postDate
-    posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-
-    // get the latest post from the front of the list (element 0)
-    let post = posts[0];
-
-    // store the "posts" and "post" data in the viewData object (to be passed to the view)
+    // store's the "posts" data in the viewData object (to be passed to the view)
     viewData.posts = posts;
-    viewData.post = post;
   } catch (err) {
     viewData.message = "no results";
   }
 
   try {
     // Obtain the full list of "categories"
-    let categories = await blogService.getCategories();
+    const categories = await blogService.getCategories();
 
-    // store the "categories" data in the viewData object (to be passed to the view)
+    // sort into alphabetical order
+    categories.sort((a, b) => a.category.localeCompare(b));
+
+    // store's the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
   } catch (err) {
     viewData.categoriesMessage = "no results";
@@ -297,47 +298,47 @@ app.get("/posts/delete/:id", ensureLogin, (req, res) => {
 });
 
 // route blog
-app.get("/blog/:id", async (req, res) => {
-  // Declare an object to store properties for the view
-  let viewData = {};
+// app.get("/blog/:id", async (req, res) => {
+//   // Declare an object to store properties for the view
+//   let viewData = {};
 
-  try {
-    // declare empty array to hold "post" objects
-    let posts = [];
+//   try {
+//     // declare empty array to hold "post" objects
+//     let posts = [];
 
-    // if there's a "category" query, filter the returned posts by category
-    // otherwise obtain the published "posts"
-    posts = req.query.category
-      ? await blogService.getPublishedPostsByCategory(req.query.category)
-      : await blogService.getPublishedPosts();
+//     // if there's a "category" query, filter the returned posts by category
+//     // otherwise obtain the published "posts"
+//     posts = req.query.category
+//       ? await blogService.getPublishedPostsByCategory(req.query.category)
+//       : await blogService.getPublishedPosts();
 
-    // sort the published posts by postDate
-    posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-    // store the "posts" and "post" data in the viewData object (to be passed to the view)
-    viewData.posts = posts;
-  } catch (err) {
-    viewData.message = "no results";
-  }
+//     // sort the published posts by postDate
+//     posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+//     // store the "posts" and "post" data in the viewData object (to be passed to the view)
+//     viewData.posts = posts;
+//   } catch (err) {
+//     viewData.message = "no results";
+//   }
 
-  try {
-    // Obtain the post by "id"
-    viewData.post = await blogService.getPostById(req.params.id);
-  } catch (err) {
-    viewData.message = "no results";
-  }
+//   try {
+//     // Obtain the post by "id"
+//     viewData.post = await blogService.getPostById(req.params.id);
+//   } catch (err) {
+//     viewData.message = "no results";
+//   }
 
-  try {
-    // Obtain the full list of "categories"
-    let categories = await blogService.getCategories();
-    // store the "categories" data in the viewData object (to be passed to the view)
-    viewData.categories = categories;
-  } catch (err) {
-    viewData.categoriesMessage = "no results";
-  }
+//   try {
+//     // Obtain the full list of "categories"
+//     let categories = await blogService.getCategories();
+//     // store the "categories" data in the viewData object (to be passed to the view)
+//     viewData.categories = categories;
+//   } catch (err) {
+//     viewData.categoriesMessage = "no results";
+//   }
 
-  // render the "blog" view with all of the data (viewData)
-  res.render("blog", { data: viewData });
-});
+//   // render the "blog" view with all of the data (viewData)
+//   res.render("blog", { data: viewData });
+// });
 
 // route categories
 app.get("/categories", ensureLogin, (req, res) => {
