@@ -3,47 +3,51 @@
 
     <div class="row align-items-center px-2 h-100">
       <div class="col-md-6">
-        <h2 class="display-2 mb-4">Where
+        <h1 class="display-2 mb-4">Where
           <span class="text-secondary">Culinary Creations</span>
-          Unite!</h2>
+          Unite!
+        </h1>
         <p class="lead mb-4">Indulge your taste buds and embark on a flavorful
           journey with DishCord. We're your go-to destination for mouthwatering
           recipes, cooking inspiration, and a vibrant community of food
           enthusiasts.</p>
         <a href="/register" class="btn btn-primary btn-lg">Register Now</a>
       </div>
+
       <div class="d-none d-md-block col-md-6">
         <div class="image-container">
           <img src="/images/hero.png" alt="" class="img-fluid" />
         </div>
       </div>
-
     </div>
+
   </div>
 </section>
 
+{{! Stats }}
 <section class="mt-1">
   <div class="container mt-4">
-    {{! Stats }}
+
     <div class="row">
       <div class="col-4 text-center mt-5">
         <i class="fas fa-user fa-2xl mb-3"></i>
         <h5 class="counter">328</h5>
-        <p>USERS</p>
+        <span>USERS</span>
       </div>
 
       <div class="col-4 text-center mt-5">
         <i class="fas fa-carrot fa-2xl mb-3"></i>
         <h5 class="counter">328</h5>
-        <p>CATEGORIES</p>
+        <span>CATEGORIES</span>
       </div>
 
       <div class="col-4 text-center mt-5">
         <i class="fas fa-utensils fa-2xl mb-3"></i>
         <h5 class="counter">328</h5>
-        <p>RECIPES</p>
+        <span>RECIPES</span>
       </div>
     </div>
+
   </div>
 </section>
 
@@ -53,10 +57,11 @@
     d="M0,160L60,170.7C120,181,240,203,360,186.7C480,171,600,117,720,101.3C840,85,960,107,1080,112C1200,117,1320,107,1380,101.3L1440,96L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
   ></path></svg>
 
+{{! About }}
 <section class="d-flex align-items-center bg-light">
   <div class="container">
-    <div class="row">
 
+    <div class="row">
       <div class="col-lg-6 order-2 order-lg-1">
         <div class="image-container">
           <img
@@ -71,35 +76,34 @@
         class="col-lg-6 order- order-lg-1 d-flex flex-column justify-content-center"
       >
         <h2>ABOUT</h2>
-        <h2 class="w-75 text-secondary fw-semibold">Breaking barriers for
-          culinary enthusiasts by keeping it Simple</h2>
-        <p class="w-75">"It is our mission to remove barriers and get you
-          straight to what you need. Unregistered viewers are able to simply
-          jump in and savor the feast of foods, while registered members can
-          seamlessly share their culinary creations and connect with our vibrant
-          community."</p>
-
+        <h2 class="w-75 text-secondary fw-semibold">Breaking barriers keeping it
+          Simple</h2>
+        <p class="w-75">It is our mission to remove barriers and get you
+          straight to what you need. Don't want to registered? No worries,
+          viewers are able to simply jump in and start exploring, while
+          registered members can share their culinary creations.</p>
       </div>
     </div>
 
   </div>
 </section>
+
 <svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 1440 320"
   class="bg-secondary"
 ><path
-    {{! fill="#6c6dca" }}
     fill="#fcfcfc"
     fill-opacity="1"
     d="M0,160L60,170.7C120,181,240,203,360,186.7C480,171,600,117,720,101.3C840,85,960,107,1080,112C1200,117,1320,107,1380,101.3L1440,96L1440,0L1380,0C1320,0,1200,0,1080,0C960,0,840,0,720,0C600,0,480,0,360,0C240,0,120,0,60,0L0,0Z"
   ></path></svg>
 
+{{! Features }}
 <section class="features bg-secondary text-white" id="feature">
-  <div class="container">
-    <div class="text-center mb-5">
+  <div class="container pb-5">
+    <div class="text-center mb-6">
       <h2>FEATURES</h2>
-      <p>Create, Explore, and Share with Ease"</p>
+      <p>Create, Explore, and Share with Ease</p>
     </div>
 
     <div
@@ -150,12 +154,12 @@
   viewBox="0 0 1440 320"
   class="bg-secondary"
 ><path
-    {{! fill="#6c6dca" }}
     fill="#fcfcfc"
     fill-opacity="1"
     d="M0,160L60,170.7C120,181,240,203,360,186.7C480,171,600,117,720,101.3C840,85,960,107,1080,112C1200,117,1320,107,1380,101.3L1440,96L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
   ></path></svg>
 
+{{! Bottom CTA }}
 <section class="bg-light pb-7">
   <div class="container">
     <div class="text-center">
@@ -167,16 +171,16 @@
   </div>
 </section>
 
-{{! #fcfcfc }}
-
+{{! Footer }}
 <footer class="bg-light border-top py-3">
   <div class="container">
+
+    {{! Brand & Navigation }}
     <div class="row row-cols-2">
       <div class="col">
         <a class="navbar-brand fs-5" href="/">
           DishC<i class="fas fa-cookie-bite"></i>rd
         </a>
-
       </div>
       <div class="col text-end">
         <a href="/home" class="btn btn-sm">Home </a>
@@ -186,6 +190,7 @@
       </div>
     </div>
 
+    {{! Social Links }}
     <div class="text-center">
       <span class="border-start border-end">
         <a href="/home" class="btn btn-sm"><i
@@ -203,5 +208,6 @@
         </a>
       </span>
     </div>
+
   </div>
 </footer>
