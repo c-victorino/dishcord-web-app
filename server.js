@@ -121,7 +121,9 @@ function ensureLogin(req, res, next) {
 // home route
 app.get("/", (req, res) => res.redirect("/about"));
 
-app.get("/home", (req, res) => res.render("home"));
+app.get("/home", (req, res) => {
+  res.render("home");
+});
 
 // route about
 app.get("/about", (req, res) => res.render("about"));
@@ -130,13 +132,30 @@ app.get("/about", (req, res) => res.render("about"));
 app.get("/blog", async (req, res) => {
   // Object to store properties for the view
   let viewData = {};
+  // Pagination setup
+  const postPerPage = 6;
+  const currentPage = req.query.page || 1;
+  const qCategory = req.query.category;
+
+  // Determine the number of pages needed for the views
+  try {
+    const totalPage = await blogService.getPaginationPageCount(
+      postPerPage,
+      qCategory
+    );
+    viewData.totalPage = totalPage;
+  } catch (err) {
+    viewData.pageMessage = "unable to determine needed pages";
+  }
+
   // Post Pagination
   try {
-    // Pagination setup
-    const postPerPage = 6;
-    const currentPage = req.query.page || 1;
-    const posts = req.query.category
-      ? await blogService.getPaginatedPostByCategory(postPerPage, currentPage)
+    const posts = qCategory
+      ? await blogService.getPaginatedPostByCategory(
+          qCategory,
+          postPerPage,
+          currentPage
+        )
       : await blogService.getPaginatedPost(postPerPage, currentPage);
 
     // sort posts by most recent upload/update
@@ -149,16 +168,14 @@ app.get("/blog", async (req, res) => {
     // store's the "posts" data in the viewData object (to be passed to the view)
     viewData.posts = posts;
   } catch (err) {
-    viewData.message = "no results";
+    viewData.postMessage = "no results";
   }
 
   try {
     // Obtain the full list of "categories"
     const categories = await blogService.getCategories();
-
     // sort into alphabetical order
     categories.sort((a, b) => a.category.localeCompare(b));
-
     // store's the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
   } catch (err) {

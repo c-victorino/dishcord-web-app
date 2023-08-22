@@ -221,6 +221,52 @@ async function getPostOrigin(postId) {
   } catch (err) {}
 }
 
+async function getPaginationPageCount(postPerPage, category) {
+  try {
+    const total = category
+      ? await Post.count({ where: category })
+      : await Post.count();
+    return Math.ceil(total / postPerPage);
+  } catch (err) {
+    throw new Error("Error on calculating pagination page count");
+  }
+}
+
+async function getPaginatedPostByCategory(category, postPerPage, currentPage) {
+  const offset = (currentPage - 1) * postPerPage;
+  try {
+    const posts = await Post.findAll({
+      limit: postPerPage,
+      offset: offset,
+      where: {
+        published: true,
+        category: category,
+      },
+    });
+
+    return posts;
+  } catch (err) {
+    throw new Error("Error fetching paginated posts by category");
+  }
+}
+
+async function getPaginatedPost(postPerPage, currentPage) {
+  const offset = (currentPage - 1) * postPerPage;
+  try {
+    const posts = await Post.findAll({
+      limit: postPerPage,
+      offset: offset,
+      where: {
+        published: true,
+      },
+    });
+
+    return posts;
+  } catch (err) {
+    throw new Error("Error fetching paginated posts");
+  }
+}
+
 module.exports = {
   initialize,
   getAllPosts,
@@ -236,4 +282,8 @@ module.exports = {
   deletePostById,
   getPostOrigin,
   updatePost,
+
+  getPaginationPageCount,
+  getPaginatedPostByCategory,
+  getPaginatedPost,
 };
