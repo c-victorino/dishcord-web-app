@@ -165,6 +165,8 @@ app.get("/blog", async (req, res) => {
         new Date(a.lastUpdate || a.postDate)
     );
 
+    console.log("STart Here");
+    console.log(posts);
     // store's the "posts" data in the viewData object (to be passed to the view)
     viewData.posts = posts;
   } catch (err) {
@@ -179,8 +181,9 @@ app.get("/blog", async (req, res) => {
     // store's the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
   } catch (err) {
-    viewData.categoriesMessage = "no results";
+    viewData.categoriesErrMessage = "No Categories";
   }
+  // console.log(viewData);
 
   // render the "blog" view with all of the data (viewData)
   res.render("blog", { data: viewData });
@@ -257,7 +260,7 @@ app.post(
       });
     } else {
       // Handle the case when no image is uploaded
-      console.log(req.body);
+      // console.log(req.body);
       req.body.featureImage = null;
       blogService
         .addPost(req.body, userId)
