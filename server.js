@@ -113,20 +113,19 @@ const upload = multer(); // no { storage: storage } since we are not using disk 
 // checks if a user is logged in. Can be used in any route that
 // needs to be protected against unauthenticated access
 function ensureLogin(req, res, next) {
-  // console.log(req.session.user);
   !req.session.user ? res.redirect("/login") : next();
 }
 
 // routes
 // home route
-app.get("/", (req, res) => res.redirect("/about"));
+app.get("/", (req, res) => res.redirect("/home"));
 
 app.get("/home", (req, res) => {
   res.render("home");
 });
 
 // route about
-app.get("/about", (req, res) => res.render("about"));
+// app.get("/about", (req, res) => res.render("about"));
 
 // route blog
 app.get("/blog", async (req, res) => {
@@ -137,13 +136,19 @@ app.get("/blog", async (req, res) => {
   const currentPage = req.query.page || 1;
   const qCategory = req.query.category;
 
+  viewData.currentPage = currentPage;
+  viewData.qCategory = qCategory;
+
   // Determine the number of pages needed for the views
   try {
     const totalPage = await blogService.getPaginationPageCount(
       postPerPage,
       qCategory
     );
-    viewData.totalPage = totalPage;
+
+    if (totalPage.length > 1) {
+      viewData.totalPage = totalPage;
+    }
   } catch (err) {
     viewData.pageMessage = "unable to determine needed pages";
   }
@@ -157,16 +162,6 @@ app.get("/blog", async (req, res) => {
           currentPage
         )
       : await blogService.getPaginatedPost(postPerPage, currentPage);
-
-    // sort posts by most recent upload/update
-    posts.sort(
-      (a, b) =>
-        new Date(b.lastUpdate || b.postDate) -
-        new Date(a.lastUpdate || a.postDate)
-    );
-
-    console.log("STart Here");
-    console.log(posts);
     // store's the "posts" data in the viewData object (to be passed to the view)
     viewData.posts = posts;
   } catch (err) {
@@ -183,8 +178,6 @@ app.get("/blog", async (req, res) => {
   } catch (err) {
     viewData.categoriesErrMessage = "No Categories";
   }
-  // console.log(viewData);
-
   // render the "blog" view with all of the data (viewData)
   res.render("blog", { data: viewData });
 });
@@ -260,7 +253,6 @@ app.post(
       });
     } else {
       // Handle the case when no image is uploaded
-      // console.log(req.body);
       req.body.featureImage = null;
       blogService
         .addPost(req.body, userId)

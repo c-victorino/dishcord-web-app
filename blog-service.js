@@ -224,9 +224,16 @@ async function getPostOrigin(postId) {
 async function getPaginationPageCount(postPerPage, category) {
   try {
     const total = category
-      ? await Post.count({ where: category })
+      ? await Post.count({ where: { category: category } })
       : await Post.count();
-    return Math.ceil(total / postPerPage);
+
+    const pageNumbers = [];
+
+    const math = Math.ceil(total / postPerPage);
+    for (let i = 1; i <= math; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
   } catch (err) {
     throw new Error("Error on calculating pagination page count");
   }
@@ -259,6 +266,7 @@ async function getPaginatedPost(postPerPage, currentPage) {
       where: {
         published: true,
       },
+      order: [["updatedAt", "DESC"]],
     });
 
     return posts;

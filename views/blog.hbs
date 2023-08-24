@@ -2,7 +2,6 @@
   <div class="container pt-7">
     <h2>Blog Post</h2>
     <div class="d-flex flex-wrap gap-2">
-
       {{! Category Links }}
       {{#if data.categories}}
         <a href="/blog" class="btn btn-primary">VIEW ALL</a>
@@ -15,69 +14,88 @@
           class="btn btn-primary disabled"
         >{{data.categoriesErrMessage}}</a>
       {{/if}}
+    </div>
 
+    {{#if data.posts}}
       <div class="d-flex justify-content-around flex-wrap w-100 gap-5 pt-4">
-
-        {{#if data.posts}}
-          {{#each data.posts}}
-            {{! Card Post }}
-            <div class="card shadow bg-primary">
-              <img
-                src="{{featureImage}}"
-                class="card-img-top"
-                alt="feature image of the food post"
-              />
-              <div class="card-body bg-dark text-light">
-                <h5 class="card-title">{{title}}</h5>
-                <p class="card-text text-truncate">{{body}}</p>
-                <a
-                  class="btn btn-primary mt-1"
-                  data-bs-toggle="modal"
-                  data-bs-target="#modal{{id}}"
-                >Read More</a>
-              </div>
+        {{#each data.posts}}
+          {{! Card Post }}
+          <div class="card shadow bg-primary">
+            <img
+              src="{{featureImage}}"
+              class="card-img-top"
+              alt="feature image of the food post"
+            />
+            <div class="card-body bg-dark text-light">
+              <h5 class="card-title">{{title}}</h5>
+              <p class="card-text text-truncate">{{body}}</p>
+              <a
+                class="btn btn-primary mt-1"
+                data-bs-toggle="modal"
+                data-bs-target="#modal{{id}}"
+              >Read More</a>
             </div>
+          </div>
 
-            {{! Modal }}
-            <div class="modal fade" id="modal{{id}}">
-              <div class="modal-dialog modal-xl">
-                <div class="modal-content border-dark">
-                  {{! Header }}
-                  <div class="modal-header bg-dark text-light">
-                    <h5
-                      class="modal-title"
-                      id="exampleModalLabel "
-                    >{{title}}</h5>
-                    <button
-                      type="button"
-                      class="btn btn-primary"
-                      data-bs-dismiss="modal"
-                    ></button>
+          {{! Modal }}
+          <div class="modal fade" id="modal{{id}}">
+            <div class="modal-dialog modal-xl">
+              <div class="modal-content border-dark">
+                {{! Header }}
+                <div class="modal-header bg-dark text-light">
+                  <h5 class="modal-title" id="exampleModalLabel ">{{title}}</h5>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal"
+                  ></button>
+                </div>
+                {{! Body }}
+                <div class="row">
+                  <div class="col-lg-6">
+                    <div
+                      class="bg-primary h-100 d-flex justify-content-center align-content-center"
+                    >
+                      <img src="{{featureImage}}" alt="" class="modal-img" />
+                    </div>
                   </div>
-                  {{! Body }}
-                  <div class="row">
-                    <div class="col-lg-6">
-                      <div
-                        class="bg-primary h-100 d-flex justify-content-center align-content-center"
-                      >
-                        <img src="{{featureImage}}" alt="" class="modal-img" />
-                      </div>
-                    </div>
-                    <div class="col-lg-6 scrollable-text my-auto">
-                      <h3 class="pt-5 px-4 pb-3">{{title}}</h3>
-                      <p class="px-4 pb-3 fs-5">{{body}}</p>
-                    </div>
+                  <div class="col-lg-6 scrollable-text my-auto">
+                    <h3 class="pt-5 px-4 pb-3">{{title}}</h3>
+                    <p class="px-4 pb-3 fs-5">{{body}}</p>
                   </div>
                 </div>
               </div>
             </div>
-          {{/each}}
-
-        {{else}}
-          <h2>No posts in this category.</h2>
-        {{/if}}
+          </div>
+        {{/each}}
       </div>
 
-    </div>
+      {{! Post Pagination }}
+      <nav aria-label="Page navigation example">
+        <ul class="pagination">
+          <li class="page-item disabled">
+            <a
+              class="page-link"
+              href="#"
+              tabindex="-1"
+              aria-disabled="true"
+            >Previous</a>
+          </li>
+          {{#each data.totalPage}}
+         
+            <li class="page-item"><a
+                class="page-link"
+                href="?page={{this}}{{#if ../data.qCategory}}&category={{../data.qCategory}}{{/if}}"
+              >{{this}}</a></li>
+          {{/each}}
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+    {{else}}
+      <h2>No posts in this category.</h2>
+    {{/if}}
+
   </div>
 </section>
