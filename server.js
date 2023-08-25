@@ -121,7 +121,7 @@ function ensureLogin(req, res, next) {
 app.get("/", (req, res) => res.redirect("/home"));
 
 app.get("/home", (req, res) => {
-  res.render("home");
+  res.render("home", { enable: true });
 });
 
 // route about

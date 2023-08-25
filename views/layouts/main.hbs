@@ -66,16 +66,17 @@
                 class="navbar-nav justify-content-center align-items-center flex-grow-1 gap-2"
               >
                 {{#navLink "/home"}}Home{{/navLink}}
-                {{#navLink "#about"}}About{{/navLink}}
-                {{#navLink "#feature"}}Feature{{/navLink}}
+                {{#if enable}}
+                  {{#navLink "#about"}}About{{/navLink}}
+                  {{#navLink "#feature"}}Feature{{/navLink}}
+                {{/if}}
+
                 {{#navLink "/blog"}}Blog{{/navLink}}
 
                 {{#if session.user}}
                   {{#navLink "/posts"}}Posts{{/navLink}}
                   {{#navLink "/categories"}}Categories{{/navLink}}
                 {{/if}}
-
-                {{!-- {{#navLink "/about"}}About{{/navLink}} --}}
               </ul>
 
               <!-- Right-Side Links -->
