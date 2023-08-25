@@ -52,9 +52,9 @@
                       >{{category}}</a>
                     </td>
                     <td>{{published}}</td>
-                    <td>{{#formatDate postDate}}{{/formatDate}}</td>
-                    <td>{{#if lastUpdate}}
-                        {{#formatDate lastUpdate}}{{/formatDate}}
+                    <td>{{#formatDate createdAt}}{{/formatDate}}</td>
+                    <td>{{#if isUpdated}}
+                        {{#formatDate updatedAt}}{{/formatDate}}
                       {{else}}
                         Original{{/if}}</td>
                     <td>

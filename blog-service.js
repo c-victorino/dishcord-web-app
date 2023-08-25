@@ -15,8 +15,10 @@ const sequelize = new Sequelize(process.env.ELEPHANTSQL_CONNECTION_STRING, {
 const Post = sequelize.define("Post", {
   body: Sequelize.TEXT,
   title: Sequelize.STRING,
-  postDate: Sequelize.DATE,
-  lastUpdate: Sequelize.DATE,
+  isUpdated: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+  },
   featureImage: Sequelize.STRING,
   published: Sequelize.BOOLEAN,
   userOrigin: Sequelize.STRING,
@@ -169,10 +171,9 @@ function addPost(postData, userId) {
 
 async function updatePost(postId, postData) {
   try {
-    postData.lastUpdate = new Date();
+    postData.isUpdated = true;
     postData.published = postData.published ? true : false;
     await Post.update(postData, { where: { id: postId } });
-    // return { success: true, message: "Post updated successfully" };
   } catch (err) {
     throw err;
   }
@@ -275,6 +276,24 @@ async function getPaginatedPost(postPerPage, currentPage) {
   }
 }
 
+async function getCategoryCount() {
+  try {
+    const categoryCount = await Category.count();
+    return categoryCount;
+  } catch (err) {
+    throw new Error("Error fetching number of categories");
+  }
+}
+
+async function getPostCount() {
+  try {
+    const postCount = await Post.count({ where: { published: true } });
+    return postCount;
+  } catch (err) {
+    throw new Error("Error fetching number of posts");
+  }
+}
+
 module.exports = {
   initialize,
   getAllPosts,
@@ -294,4 +313,6 @@ module.exports = {
   getPaginationPageCount,
   getPaginatedPostByCategory,
   getPaginatedPost,
+  getPostCount,
+  getCategoryCount,
 };

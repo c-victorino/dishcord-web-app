@@ -120,8 +120,35 @@ function ensureLogin(req, res, next) {
 // home route
 app.get("/", (req, res) => res.redirect("/home"));
 
-app.get("/home", (req, res) => {
-  res.render("home", { enable: true });
+// app.get("/home", (req, res) => {
+//   res.render("home", { enable: true });
+// });
+
+app.get("/home", async (req, res) => {
+  let viewData = {};
+
+  try {
+    const userCount = await authData.getUserCount();
+    viewData.userCount = userCount;
+  } catch (err) {
+    viewData.userErr = err;
+  }
+
+  try {
+    const categoryCount = await blogService.getCategoryCount();
+    viewData.categoryCount = categoryCount;
+  } catch (err) {
+    viewData.categoryErr = err;
+  }
+
+  try {
+    const postCount = await blogService.getPostCount();
+    viewData.postCount = postCount;
+  } catch (err) {
+    viewData.postErr = err;
+  }
+
+  res.render("home", { enable: true, view: viewData });
 });
 
 // route about
@@ -292,7 +319,7 @@ app.post(
         if (origin === userId) {
           blogService
             .updatePost(req.params.id, req.body)
-            .then(() => res.redirect("/"));
+            .then(() => res.redirect("/posts"));
         }
       })
       .catch((err) => console.log("Error in Update Post Root"));
@@ -308,49 +335,6 @@ app.get("/posts/delete/:id", ensureLogin, (req, res) => {
     .then(() => res.redirect("/posts"))
     .catch((err) => res.status(500).send(err));
 });
-
-// route blog
-// app.get("/blog/:id", async (req, res) => {
-//   // Declare an object to store properties for the view
-//   let viewData = {};
-
-//   try {
-//     // declare empty array to hold "post" objects
-//     let posts = [];
-
-//     // if there's a "category" query, filter the returned posts by category
-//     // otherwise obtain the published "posts"
-//     posts = req.query.category
-//       ? await blogService.getPublishedPostsByCategory(req.query.category)
-//       : await blogService.getPublishedPosts();
-
-//     // sort the published posts by postDate
-//     posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-//     // store the "posts" and "post" data in the viewData object (to be passed to the view)
-//     viewData.posts = posts;
-//   } catch (err) {
-//     viewData.message = "no results";
-//   }
-
-//   try {
-//     // Obtain the post by "id"
-//     viewData.post = await blogService.getPostById(req.params.id);
-//   } catch (err) {
-//     viewData.message = "no results";
-//   }
-
-//   try {
-//     // Obtain the full list of "categories"
-//     let categories = await blogService.getCategories();
-//     // store the "categories" data in the viewData object (to be passed to the view)
-//     viewData.categories = categories;
-//   } catch (err) {
-//     viewData.categoriesMessage = "no results";
-//   }
-
-//   // render the "blog" view with all of the data (viewData)
-//   res.render("blog", { data: viewData });
-// });
 
 // route categories
 app.get("/categories", ensureLogin, (req, res) => {

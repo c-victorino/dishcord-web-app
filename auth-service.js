@@ -94,9 +94,18 @@ function checkUser(userData) {
       .catch((err) => reject(`Unable to find user: ${userData.userName}`));
   });
 }
+async function getUserCount() {
+  try {
+    const userCount = await User.countDocuments({});
+    return userCount;
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = {
   initialize,
   registerUser,
   checkUser,
+  getUserCount,
 };
