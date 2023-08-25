@@ -16,6 +16,7 @@
       {{/if}}
     </div>
 
+    {{! Card Post & Modal }}
     {{#if data.posts}}
       <div class="d-flex justify-content-around flex-wrap w-100 gap-5 pt-4">
         {{#each data.posts}}
@@ -43,7 +44,7 @@
               <div class="modal-content border-dark">
                 {{! Header }}
                 <div class="modal-header bg-dark text-light">
-                  <h5 class="modal-title" id="exampleModalLabel ">{{title}}</h5>
+                  <h5 class="modal-title">{{title}}</h5>
                   <button
                     type="button"
                     class="btn btn-primary"
@@ -71,31 +72,18 @@
       </div>
 
       {{! Post Pagination }}
-      <nav aria-label="Page navigation example">
-        <ul class="pagination">
-          <li class="page-item disabled">
-            <a
-              class="page-link"
-              href="#"
-              tabindex="-1"
-              aria-disabled="true"
-            >Previous</a>
-          </li>
+      <nav aria-label="Page navigation example ">
+        <ul class="pagination justify-content-center mt-4 ">
           {{#each data.totalPage}}
-         
             <li class="page-item"><a
-                class="page-link"
-                href="?page={{this}}{{#if ../data.qCategory}}&category={{../data.qCategory}}{{/if}}"
-              >{{this}}</a></li>
-          {{/each}}
-          <li class="page-item">
-            <a class="page-link" href="#">Next</a>
-          </li>
+              class="page-link bg-dark text-light"
+              href="?page={{this}}{{#if ../data.qCategory}}&category={{../data.qCategory}}{{/if}}"
+            >{{this}}</a></li>
+          {{/each}}          
         </ul>
       </nav>
     {{else}}
       <h2>No posts in this category.</h2>
     {{/if}}
-
   </div>
 </section>
