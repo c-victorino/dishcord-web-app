@@ -1,29 +1,33 @@
+require("dotenv").config();
 const NO_RESULTS = "no results returned"; // reject message
 const Sequelize = require("sequelize");
 
 // set up sequelize to point to a postgres database
-const sequelize = new Sequelize("database", "user", "password", {
-  host: "host",
-  dialect: "postgres",
-  port: 5432,
+const sequelize = new Sequelize(process.env.ELEPHANTSQL_CONNECTION_STRING, {
   dialectOptions: {
     ssl: { rejectUnauthorized: false },
   },
   query: { raw: true },
+  logging: false,
 });
 
 // Data Model
 const Post = sequelize.define("Post", {
   body: Sequelize.TEXT,
   title: Sequelize.STRING,
-  postDate: Sequelize.DATE,
+  isUpdated: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+  },
   featureImage: Sequelize.STRING,
   published: Sequelize.BOOLEAN,
+  userOrigin: Sequelize.STRING,
 });
 
 // Data Model
 const Category = sequelize.define("Category", {
   category: Sequelize.STRING,
+  userOrigin: Sequelize.STRING,
 });
 
 // Post model gets a "category" column that will act as
@@ -42,10 +46,13 @@ function initialize() {
 }
 
 // retrieves all posts from the PostgreSQL database
-function getAllPosts() {
+function getAllPosts(userId) {
   return new Promise((resolve, reject) => {
     Post.findAll()
-      .then((posts) => resolve(posts))
+      .then((posts) => {
+        posts.forEach((post) => (post.userOrigin = post.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -62,23 +69,33 @@ function getPublishedPosts() {
 }
 
 // Retrieves all categories from the PostgreSQL database
-function getCategories() {
+function getCategories(userId) {
   return new Promise((resolve, reject) => {
     Category.findAll()
-      .then((data) => resolve(data))
+      .then((categories) => {
+        // make true if user is the creator of the category
+        categories.forEach(
+          (obj) => (obj.userOrigin = obj.userOrigin === userId)
+        );
+
+        resolve(categories);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
 
 // get post who's category value is the value passed to the function
-function getPostsByCategory(category) {
+function getPostsByCategory(category, userId) {
   return new Promise((resolve, reject) => {
     Post.findAll({
       where: {
         category,
       },
     })
-      .then((posts) => resolve(posts))
+      .then((posts) => {
+        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -94,7 +111,10 @@ function getPostsByMinDate(minDateStr) {
         },
       },
     })
-      .then((data) => resolve(data))
+      .then((posts) => {
+        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+        resolve(posts);
+      })
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -126,7 +146,7 @@ function getPublishedPostsByCategory(category) {
 }
 
 // create and saves the postData to a PostgreSQL database
-function addPost(postData) {
+function addPost(postData, userId) {
   return new Promise((resolve, reject) => {
     // Ensure value is correct when user toggled or not the
     // published property in the form
@@ -137,8 +157,11 @@ function addPost(postData) {
         postData[key] = null;
       }
     }
+
     // assign postDate val as current date when posted
     postData.postDate = new Date();
+    // assign userOrigin as the userID
+    postData.userOrigin = userId;
 
     Post.create(postData)
       .then((data) => resolve(data))
@@ -146,15 +169,21 @@ function addPost(postData) {
   });
 }
 
+async function updatePost(postId, postData) {
+  try {
+    postData.isUpdated = true;
+    postData.published = postData.published ? true : false;
+    await Post.update(postData, { where: { id: postId } });
+  } catch (err) {
+    throw err;
+  }
+}
+
 // create and saves the categoryData to a PostgreSQL database
-function addCategory(categoryData) {
+function addCategory(categoryData, userId) {
   return new Promise((resolve, reject) => {
-    for (let key in categoryData) {
-      // ensure that any blank values in categoryData are set to null
-      if (categoryData[key] === "") {
-        categoryData[key] = null;
-      }
-    }
+    // adds the id of the creator of the category
+    categoryData.userOrigin = userId.toString();
 
     Category.create(categoryData)
       .then((data) => resolve(data))
@@ -163,10 +192,10 @@ function addCategory(categoryData) {
 }
 
 // deletes specific category by its id
-function deleteCategoryById(id) {
+function deleteCategoryById(id, userId) {
   return new Promise((resolve, reject) => {
     Category.destroy({
-      where: { id },
+      where: { id, userOrigin: userId },
     })
       .then(() => resolve("destroyed"))
       .catch((err) => reject("Unable to Remove Category / Category not found"));
@@ -174,14 +203,95 @@ function deleteCategoryById(id) {
 }
 
 // deletes specific Post by its id
-function deletePostById(id) {
+function deletePostById(id, userId) {
   return new Promise((resolve, reject) => {
     Post.destroy({
-      where: { id },
+      where: { id, userOrigin: userId },
     })
       .then(() => resolve("destroyed"))
       .catch((err) => reject("Unable to Remove Post / Post not found"));
   });
+}
+
+async function getPostOrigin(postId) {
+  try {
+    const origin = await Post.findByPk(postId, {
+      attributes: ["userOrigin"],
+    });
+    return origin ? origin.userOrigin : null;
+  } catch (err) {}
+}
+
+async function getPaginationPageCount(postPerPage, category) {
+  try {
+    const total = category
+      ? await Post.count({ where: { category: category } })
+      : await Post.count();
+
+    const pageNumbers = [];
+
+    const math = Math.ceil(total / postPerPage);
+    for (let i = 1; i <= math; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
+  } catch (err) {
+    throw new Error("Error on calculating pagination page count");
+  }
+}
+
+async function getPaginatedPostByCategory(category, postPerPage, currentPage) {
+  const offset = (currentPage - 1) * postPerPage;
+  try {
+    const posts = await Post.findAll({
+      limit: postPerPage,
+      offset: offset,
+      where: {
+        published: true,
+        category: category,
+      },
+    });
+
+    return posts;
+  } catch (err) {
+    throw new Error("Error fetching paginated posts by category");
+  }
+}
+
+async function getPaginatedPost(postPerPage, currentPage) {
+  const offset = (currentPage - 1) * postPerPage;
+  try {
+    const posts = await Post.findAll({
+      limit: postPerPage,
+      offset: offset,
+      where: {
+        published: true,
+      },
+      order: [["updatedAt", "DESC"]],
+    });
+
+    return posts;
+  } catch (err) {
+    throw new Error("Error fetching paginated posts");
+  }
+}
+
+async function getCategoryCount() {
+  try {
+    const categoryCount = await Category.count();
+    return categoryCount;
+  } catch (err) {
+    throw new Error("Error fetching number of categories");
+  }
+}
+
+async function getPostCount() {
+  try {
+    const postCount = await Post.count({ where: { published: true } });
+    return postCount;
+  } catch (err) {
+    throw new Error("Error fetching number of posts");
+  }
 }
 
 module.exports = {
@@ -197,4 +307,12 @@ module.exports = {
   addCategory,
   deleteCategoryById,
   deletePostById,
+  getPostOrigin,
+  updatePost,
+
+  getPaginationPageCount,
+  getPaginatedPostByCategory,
+  getPaginatedPost,
+  getPostCount,
+  getCategoryCount,
 };

@@ -1,91 +1,100 @@
-<div class="row">
-  <div class="col-md-12">
+<section class="vh-100 text-center text-lg-start">
+  <div class="container h-100 d-flex justify-content-center align-items-center">
+    <div class="row align-items-center">
 
-    <h2>Register</h2>
-    <hr />
+      {{! 1 }}
+      <div class="col-lg-6">
+        <h2 class="display-2 fw-bol ls-tight">Explore a World of
+          <span class="text-primary">Culinary Delights</span></h2>
+        <p class="lh-lg">Join our vibrant community of food enthusiasts and
+          unlock a world of culinary delights. Indulge in the joy of sharing and
+          discovering recipes, techniques, and stories that celebrate the art of
+          cooking.
+        </p>
+      </div>
 
-    {{#if successMessage}}
-      <div class="alert alert-success">
-        <strong>Success:</strong>
-        {{successMessage}}</div><a
-        class="btn btn-success pull-right"
-        href="/login"
-      >&nbsp;&nbsp;&nbsp;Proceed to Log in&nbsp;&nbsp;&nbsp;</a><br /><br /><br
-      />
-    {{else}}
-      {{#if errorMessage}}<div class="alert alert-danger">
-          <strong>Error:</strong>
-          {{errorMessage}}</div>
-        only if there is an errorMessage
-      {{/if}}
-      <form method="post" action="/register">
+      {{! 2 }}
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            {{#if successMessage}}
+              <div class="alert alert-success">
+                <strong>Success:</strong>
+                {{successMessage}}</div>
+              <a class="btn btn-success pull-right" href="/login">
+                Proceed to Login
+                <i class="fas fa-right-to-bracket"></i>
+              </a>
+            {{else}}
+              {{#if errorMessage}}<div class="alert alert-danger">
+                  <strong>Error:</strong>
+                  {{errorMessage}}</div>
+              {{/if}}
+              <h3 class="mb-4">Registration</h3>
+              <form method="post" action="/register">
 
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <input
-                class="form-control"
-                id="userName"
-                name="userName"
-                type="text"
-                placeholder="User Name"
-                required
-                value="{{userName}}"
-              />
-            </div>
+                <div class="mb-3">
+                  <input
+                    class="form-control border border-dark"
+                    id="userName"
+                    name="userName"
+                    type="text"
+                    placeholder="Enter user name"
+                    required
+                    value="{{userName}}"
+                    pattern="^[^\s]+$"
+                    title="Username must not contain spaces"
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <input
+                    class="form-control border border-dark"
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Create password"
+                    required
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <input
+                    class="form-control border border-dark"
+                    id="password2"
+                    name="password2"
+                    type="password"
+                    placeholder="Confirm password"
+                    required
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <input
+                    class="form-control border border-dark"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  value="Register"
+                >Register Now</button>
+              </form>
+
+              <p class="text-center mt-5">Already have an account?
+                <a href="/login" class="text-primary-50 fw-bold">Login Now</a>
+              </p>
+            {{/if}}
+
           </div>
         </div>
-
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <input
-                class="form-control"
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Password"
-                required
-              />
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <input
-                class="form-control"
-                id="password2"
-                name="password2"
-                type="password"
-                placeholder="Confirm Password"
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <input
-                class="form-control"
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email Address"
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <input
-          type="submit"
-          class="btn btn-success pull-right"
-          value="Register"
-        />
-      </form>
-    {{/if}}
+      </div>
+    </div>
   </div>
-</div>
+</section>

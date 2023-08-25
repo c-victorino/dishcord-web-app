@@ -1,3 +1,4 @@
+require("dotenv").config();
 const authData = require("./auth-service.js");
 const clientSessions = require("client-sessions");
 const express = require("express");
@@ -33,8 +34,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // client-sessions configuration
 app.use(
   clientSessions({
-    cookieName: "session", // this is the object name that will be added to 'req'
-    secret: "", // this should be a long un-guessable string.
+    cookieName: "session", // object name that will be added to 'req'
+    secret: process.env.SESSION_SECRET,
     duration: 15 * 60 * 1000,
     activeDuration: 5 * 60 * 1000,
   })
@@ -52,13 +53,12 @@ app.use((req, res, next) => {
 // {{#navLink "/about"}}About{{/navLink}}
 const navLink = function (url, options) {
   return (
-    "<li" +
-    (url == app.locals.activeRoute ? ' class="active" ' : "") +
-    '><a href="' +
-    url +
-    '">' +
-    options.fn(this) +
-    "</a></li>"
+    `<li class="nav-item">` +
+    `<a href="${url}"` +
+    (url == app.locals.activeRoute
+      ? ' class="nav-link active " '
+      : ' class="nav-link" ') +
+    `>${options.fn(this)}</a></li>`
   );
 };
 
@@ -77,6 +77,13 @@ const formatDate = function (dateObj) {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 };
 
+const ifEquals = function (arg1, arg2, options) {
+  if (arg1 === arg2) {
+    // Render content inside the {{#ifEquals}} block
+    return options.fn(this);
+  }
+};
+
 app.engine(
   ".hbs",
   exphbs.engine({
@@ -85,6 +92,7 @@ app.engine(
       navLink,
       safeHTML,
       formatDate,
+      ifEquals,
     },
   })
 );
@@ -93,9 +101,9 @@ app.set("view engine", ".hbs");
 
 // cloudinary configuration
 cloudinary.config({
-  cloud_name: "",
-  api_key: "",
-  api_secret: "",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
 
@@ -110,64 +118,110 @@ function ensureLogin(req, res, next) {
 
 // routes
 // home route
-app.get("/", (req, res) => res.redirect("/about"));
+app.get("/", (req, res) => res.redirect("/home"));
 
-// route about
-app.get("/about", (req, res) => res.render("about"));
+// app.get("/home", (req, res) => {
+//   res.render("home", { enable: true });
+// });
 
-// route blog
-app.get("/blog", async (req, res) => {
-  // Declare an object to store properties for the view
+app.get("/home", async (req, res) => {
   let viewData = {};
 
   try {
-    // declare empty array to hold "post" objects
-    let posts = [];
-
-    // if there's a "category" query, filter the returned posts by category
-    // otherwise obtain the published "posts"
-    posts = req.query.category
-      ? await blogService.getPublishedPostsByCategory(req.query.category)
-      : await blogService.getPublishedPosts();
-
-    // sort the published posts by postDate
-    posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-
-    // get the latest post from the front of the list (element 0)
-    let post = posts[0];
-
-    // store the "posts" and "post" data in the viewData object (to be passed to the view)
-    viewData.posts = posts;
-    viewData.post = post;
+    const userCount = await authData.getUserCount();
+    viewData.userCount = userCount;
   } catch (err) {
-    viewData.message = "no results";
+    viewData.userErr = err;
+  }
+
+  try {
+    const categoryCount = await blogService.getCategoryCount();
+    viewData.categoryCount = categoryCount;
+  } catch (err) {
+    viewData.categoryErr = err;
+  }
+
+  try {
+    const postCount = await blogService.getPostCount();
+    viewData.postCount = postCount;
+  } catch (err) {
+    viewData.postErr = err;
+  }
+
+  res.render("home", { enable: true, view: viewData });
+});
+
+// route about
+// app.get("/about", (req, res) => res.render("about"));
+
+// route blog
+app.get("/blog", async (req, res) => {
+  // Object to store properties for the view
+  let viewData = {};
+  // Pagination setup
+  const postPerPage = 6;
+  const currentPage = req.query.page || 1;
+  const qCategory = req.query.category;
+
+  viewData.currentPage = currentPage;
+  viewData.qCategory = qCategory;
+
+  // Determine the number of pages needed for the views
+  try {
+    const totalPage = await blogService.getPaginationPageCount(
+      postPerPage,
+      qCategory
+    );
+
+    if (totalPage.length > 1) {
+      viewData.totalPage = totalPage;
+    }
+  } catch (err) {
+    viewData.pageMessage = "unable to determine needed pages";
+  }
+
+  // Post Pagination
+  try {
+    const posts = qCategory
+      ? await blogService.getPaginatedPostByCategory(
+          qCategory,
+          postPerPage,
+          currentPage
+        )
+      : await blogService.getPaginatedPost(postPerPage, currentPage);
+    // store's the "posts" data in the viewData object (to be passed to the view)
+    viewData.posts = posts;
+  } catch (err) {
+    viewData.postMessage = "no results";
   }
 
   try {
     // Obtain the full list of "categories"
-    let categories = await blogService.getCategories();
-
-    // store the "categories" data in the viewData object (to be passed to the view)
+    const categories = await blogService.getCategories();
+    // sort into alphabetical order
+    categories.sort((a, b) => a.category.localeCompare(b));
+    // store's the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
   } catch (err) {
-    viewData.categoriesMessage = "no results";
+    viewData.categoriesErrMessage = "No Categories";
   }
-
   // render the "blog" view with all of the data (viewData)
   res.render("blog", { data: viewData });
 });
 
 // route posts / post
 app.get("/posts", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   const category = req.query.category;
   const minDateStr = req.query.minDate;
+
   blogService
-    .getAllPosts()
+    .getAllPosts(userId)
     .then((data) => {
       if (category) {
-        return blogService.getPostsByCategory(category);
+        return blogService.getPostsByCategory(category, userId);
       } else if (minDateStr) {
-        return blogService.getPostsByMinDate(minDateStr);
+        return blogService.getPostsByMinDate(minDateStr, userId);
       } else {
         return Promise.resolve(data);
       }
@@ -200,6 +254,7 @@ app.post(
   ensureLogin,
   upload.single("featureImage"),
   (req, res) => {
+    const userId = req.session.user.id.toString();
     if (req.file) {
       let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
@@ -219,7 +274,7 @@ app.post(
       upload(req).then((uploaded) => {
         req.body.featureImage = uploaded.url;
         blogService
-          .addPost(req.body)
+          .addPost(req.body, userId)
           .then(() => res.redirect("/posts"))
           .catch((err) => res.json({ message: err }));
       });
@@ -227,67 +282,64 @@ app.post(
       // Handle the case when no image is uploaded
       req.body.featureImage = null;
       blogService
-        .addPost(req.body)
+        .addPost(req.body, userId)
         .then(() => res.redirect("/posts"))
         .catch((err) => res.json({ message: err }));
     }
   }
 );
 
-app.get("/posts/delete/:id", ensureLogin, (req, res) => {
-  blogService
-    .deletePostById(req.params.id)
-    .then(() => res.redirect("/posts"))
-    .catch((err) => res.status(500).send(err));
+app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
+  try {
+    const userId = req.session.user.id.toString();
+    const postId = req.params.id;
+
+    // Fetch post by ID
+    const post = await blogService.getPostById(postId);
+
+    // Fetch categories
+    const categories = await blogService.getCategories(userId);
+
+    // Render the template with the fetched post and categories
+    res.render("addPost", { update: post, categories: categories, postId });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
-// route blog
-app.get("/blog/:id", async (req, res) => {
-  // Declare an object to store properties for the view
-  let viewData = {};
+app.post(
+  "/posts/edit/:id",
+  ensureLogin,
+  upload.single("featureImage"),
+  (req, res) => {
+    blogService
+      .getPostOrigin(req.params.id)
+      .then((origin) => {
+        const userId = req.session.user.id.toString();
+        if (origin === userId) {
+          blogService
+            .updatePost(req.params.id, req.body)
+            .then(() => res.redirect("/posts"));
+        }
+      })
+      .catch((err) => console.log("Error in Update Post Root"));
 
-  try {
-    // declare empty array to hold "post" objects
-    let posts = [];
-
-    // if there's a "category" query, filter the returned posts by category
-    // otherwise obtain the published "posts"
-    posts = req.query.category
-      ? await blogService.getPublishedPostsByCategory(req.query.category)
-      : await blogService.getPublishedPosts();
-
-    // sort the published posts by postDate
-    posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-    // store the "posts" and "post" data in the viewData object (to be passed to the view)
-    viewData.posts = posts;
-  } catch (err) {
-    viewData.message = "no results";
+    // res.status(403).render("403");
   }
+);
 
-  try {
-    // Obtain the post by "id"
-    viewData.post = await blogService.getPostById(req.params.id);
-  } catch (err) {
-    viewData.message = "no results";
-  }
-
-  try {
-    // Obtain the full list of "categories"
-    let categories = await blogService.getCategories();
-    // store the "categories" data in the viewData object (to be passed to the view)
-    viewData.categories = categories;
-  } catch (err) {
-    viewData.categoriesMessage = "no results";
-  }
-
-  // render the "blog" view with all of the data (viewData)
-  res.render("blog", { data: viewData });
+app.get("/posts/delete/:id", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
+  blogService
+    .deletePostById(req.params.id, userId)
+    .then(() => res.redirect("/posts"))
+    .catch((err) => res.status(500).send(err));
 });
 
 // route categories
 app.get("/categories", ensureLogin, (req, res) => {
   blogService
-    .getCategories()
+    .getCategories(req.session.user.id)
     .then((data) => {
       if (!data.length) {
         return Promise.reject("no results");
@@ -302,15 +354,17 @@ app.get("/categories/add", ensureLogin, (req, res) =>
 );
 
 app.post("/categories/add", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   blogService
-    .addCategory(req.body)
+    .addCategory(req.body, userId)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.json({ message: err }));
 });
 
 app.get("/categories/delete/:id", ensureLogin, (req, res) => {
+  const userId = req.session.user.id.toString();
   blogService
-    .deleteCategoryById(req.params.id)
+    .deleteCategoryById(req.params.id, userId)
     .then(() => res.redirect("/categories"))
     .catch((err) => res.status(500).send(err));
 });
@@ -319,11 +373,12 @@ app.get("/categories/delete/:id", ensureLogin, (req, res) => {
 app.get("/login", (req, res) => res.render("login"));
 
 app.post("/login", (req, res) => {
-  req.body.userAgent = req.get("User-Agent");
+  // req.body.userAgent = req.get("User-Agent");
   authData
     .checkUser(req.body)
     .then((user) => {
       req.session.user = {
+        id: user._id.toString(),
         userName: user.userName,
         email: user.email,
         loginHistory: user.loginHistory,

@@ -1,13 +1,17 @@
-<div class="row">
-  <div class="col-md-12">
-    <h2>Add Post</h2>
-    <br />
-    <form method="post" action="/posts/add" enctype="multipart/form-data">
-      <fieldset>
-        <legend>Feature Image</legend>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
+<section class="add-post mt-7 mb-2">
+  <div class="container">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2>{{#if update}}Edit Post{{else}}Add Post{{/if}}</h2>
+        <form
+          method="post" 
+          action="/posts{{#if update}}/edit/{{postId}}{{else}}/add{{/if}}" enctype="multipart/form-data">
+          
+          {{! Image Upload }}
+          <fieldset class="mb-3">
+            <legend>Feature Image</legend>
+            <div>
               <input
                 class="form-control"
                 id="featureImage"
@@ -15,70 +19,106 @@
                 type="file"
               />
             </div>
-          </div>
-        </div>
-      </fieldset>
-      <br />
-      <fieldset>
-        <legend>Post Content</legend>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
+            {{#if update.featureImage}}
+              <div class="row">
+                <div class="col-7 col-md-5 col-lg-3 mt-2">
+                  <p>Current Feature Image:</p>
+                  <img
+                    src="{{update.featureImage}}"
+                    alt="Current Feature Image"
+                    class="img-fluid"
+                  />
+                </div>
+              </div>
+            {{else}}
+              <p>No feature image was posted</p>
+            {{/if}}
+          </fieldset>
+
+          {{! Title and Body }}
+          <fieldset class="mb-3">
+            <legend>Post Content</legend>
+            {{! Title }}
+            <div class="mb-3">
               <label for="title">Title:</label>
-              <input class="form-control" id="title" name="title" type="text" />
+              <input
+                class="form-control"
+                id="title"
+                name="title"
+                type="text"
+                value="{{update.title}}"
+                required
+              />
             </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
+            {{! Body }}
+            <div>
               <label for="body">Body:</label>
               <textarea
                 class="form-control"
                 id="body"
                 name="body"
-                rows="15"
-              ></textarea>
+                rows="10"
+                required
+              >{{update.body}}</textarea>
             </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="category">Category:</label>
+          </fieldset>
 
-              {{#if categories}}
-                <select class="form-control" name="category" id="category">
-                  <option value="">Select Category</option>
-                  {{#each categories}}
-                    <option value="{{id}}">{{category}}</option>
-                  {{/each}}
-                </select>
-              {{else}}
-                <div>No Categories</div>
-              {{/if}}
+          {{! Category and Published }}
+          <fieldset class="mb-3">
+            <div class="row">
+              <div class="col-7">
+                <div>
+                  <label for="category">Category:</label>
 
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="category">Visibility:</label>
-              <div class="checkbox">
-                <label>
-                  <input type="checkbox" name="published" id="published" />
-                  Published
-                </label>
+                  {{#if categories}}
+                    <select
+                      class="form-control border-secondary"
+                      name="category"
+                      id="category"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {{#each categories}}                       
+                        <option 
+                          value="{{id}}"
+                          {{#ifEquals id ../update.category}}selected{{/ifEquals}}
+                        >{{category}}</option>
+                      {{/each}}
+                    </select>
+                  {{else}}
+                    <div>No Categories</div>
+                  {{/if}}
+
+                </div>
+              </div>
+              <div class="col-5">
+                <div>
+                  <label for="category">Visibility:</label>
+                  <div class="checkbox pt-2">
+                    <input 
+                      type="checkbox" 
+                      name="published" 
+                      id="published" 
+                      {{#if update.published}}checked{{/if}}
+                    />
+                    <label>
+                      Published
+                    </label>                    
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </fieldset>
-      <hr />
-      <input
-        type="submit"
-        class="btn btn-primary pull-right"
-        value="Add Post"
-      /><br /><br /><br />
-    </form>
+          </fieldset>
+
+          <hr />
+          <input 
+            type="submit" 
+            class="btn btn-primary" 
+            value={{#if update}}"Edit Post"{{else}}"Add Post"{{/if}}
+          />
+        </form>
+      </div>
+    </div>
+
   </div>
-</div>
+</section>

@@ -1,0 +1,58 @@
+hr {
+  color: var(--bs-secondary);
+}
+
+.features i {
+  font-size: 2rem;
+}
+
+a.active {
+  color: var(--bs-secondary) !important;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.absolute-nav {
+  position: absolute;
+  top: 10;
+  width: 100%;
+  z-index: 1000;
+}
+
+thead th {
+  color: var(--bs-white) !important;
+}
+
+tbody {
+  color: var(--bs-dark);
+}
+
+.add-post input,
+.add-post textarea {
+  border-color: var(--bs-secondary);
+}
+
+/* Blog */
+.blog {
+  .card {
+    width: 19rem;
+    height: 30rem;
+  }
+
+  .card-img-top {
+    width: 100%;
+    height: 20rem;
+    object-fit: cover;
+  }
+
+  .scrollable-text {
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-img {
+    object-fit: cover;
+    max-height: 85vh;
+    width: 100%;
+  }
+}

@@ -3,97 +3,111 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <!-- Latest compiled and minified Bootstrap 3.4.1 CSS -->
+    <link rel="icon" type="image/png" href="/images/favicon.png" />
     <link
-      href="https://bootswatch.com/3/sandstone/bootstrap.min.css"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/bootstrap.css" />
+    <link rel="stylesheet" href="/css/fontawesome.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
 
-    <title>Blog Post</title>
+    <title>DishCord</title>
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
+
+    <header>
+      <nav class="navbar navbar-expand-lg navbar-light absolute-nav">
+        <div class="container-fluid px-lg-5">
+          <a class="navbar-brand fs-4" href="/">
+            DishC<i class="fas fa-cookie-bite"></i>rd
+          </a>
+
+          <!-- Hamburger -->
           <button
+            class="navbar-toggler border-0 shadow-none"
             type="button"
-            class="navbar-toggle collapsed"
-            data-toggle="collapse"
-            data-target="#bs-example-navbar-collapse-1"
-            aria-expanded="false"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasNavbar"
           >
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="navbar-toggler-icon"></span>
           </button>
-          <span class="navbar-brand" href="#">WEB BLOG</span>
-        </div>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav">
-            {{#navLink "/blog"}}Blog{{/navLink}}
-            {{#navLink "/about"}}About{{/navLink}}
-          </ul>
-          {{#if session.user}}
-            <form class="navbar-form navbar-right">
-              <div class="dropdown">
+          <!-- Menu -->
+          <div
+            class="sidebar offcanvas offcanvas-end rounded-start"
+            tabindex="-1"
+            id="offcanvasNavbar"
+          >
+            <!-- sidebar header -->
+            <div class="offcanvas-header row gap-5">
+              <div class="col-12 text-end">
                 <button
-                  class="btn btn-primary dropdown-toggle"
                   type="button"
-                  id="userMenu"
-                  data-toggle="dropdown"
-                >
-                  <span
-                    class="glyphicon glyphicon-user"
-                  ></span>&nbsp;&nbsp;{{session.user.userName}}&nbsp;&nbsp;<span
-                    class="caret"
-                  ></span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="userMenu">
-                  <li><a href="/userHistory">User History</a></li>
-                  <li><a href="/logout">Log Out</a></li>
-                </ul>
+                  class="btn-close pe-3 pt-3"
+                  data-bs-dismiss="offcanvas"
+                ></button>
               </div>
-            </form>
-            <ul class="nav navbar-nav navbar-right">
-              {{#navLink "/posts"}}Posts{{/navLink}}
-              {{#navLink "/categories"}}Categories{{/navLink}}
-            </ul>
-          {{else}}
-            <form class="navbar-form navbar-right">
-              <a href="/register" class="btn btn-success"><span
-                  class="glyphicon glyphicon-cog"
-                ></span>&nbsp;&nbsp;Register</a>
-              <a href="/login" class="btn btn-primary"><span
-                  class="glyphicon glyphicon-chevron-right"
-                ></span>&nbsp;&nbsp;Log In</a>
-            </form>
-          {{/if}}
+              <div class="col-12 text-center">
+                <h2
+                  class="offcanvas-title fw-bold"
+                  id="offcanvasNavbarLabel"
+                >DishC<i class="fas fa-cookie-bite"></i>rd
+                </h2>
+              </div>
+            </div>
+
+            <!-- Navigation links -->
+            <div
+              class="offcanvas-body d-flex flex-column justify-content-center flex-lg-row p-5 p-lg-0 fs-6"
+            >
+              <!-- Center Links -->
+              <ul
+                class="navbar-nav justify-content-center align-items-center flex-grow-1 gap-2"
+              >
+                {{#navLink "/home"}}Home{{/navLink}}
+                {{#if enable}}
+                  {{#navLink "#about"}}About{{/navLink}}
+                  {{#navLink "#feature"}}Feature{{/navLink}}
+                {{/if}}
+
+                {{#navLink "/blog"}}Blog{{/navLink}}
+
+                {{#if session.user}}
+                  {{#navLink "/posts"}}Posts{{/navLink}}
+                  {{#navLink "/categories"}}Categories{{/navLink}}
+                {{/if}}
+              </ul>
+
+              <!-- Right-Side Links -->
+              <ul
+                class="navbar-nav flex-column flex-lg-row justify-content-center align-items-center gap-3"
+              >
+                {{#if session.user}}
+                  <!-- History / Log Out -->
+                  {{#navLink "/userHistory"}}History{{/navLink}}
+                  <li class="nav-item">
+                    <a href="/logout" class="btn btn-primary">Log Out</a>
+                  </li>
+                {{else}}
+                  <!-- register / login -->
+                  {{#navLink "/login"}}Login{{/navLink}}
+                  <li class="nav-item">
+                    <a href="/register" class="btn btn-primary">Register</a>
+                  </li>
+                {{/if}}
+              </ul>
+            </div>
+          </div>
         </div>
-        <!-- /.navbar-collapse -->
-      </div>
-      <!-- /.container-fluid -->
-    </nav>
-    <div class="container" style="padding-top: 60px">
+      </nav>
+    </header>
+
+    <main>
       {{{body}}}
-    </div>
+    </main>
 
-    <!-- Latest compiled and minified jQuery 3.6.0 JavaScript -->
-    <script
-      src="https://code.jquery.com/jquery-3.6.0.min.js"
-      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
-      crossorigin="anonymous"
-    ></script>
-
-    <!-- Latest compiled and minified Bootstrap 3.4.1 JavaScript -->
-    <script
-      src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
-      integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
-      crossorigin="anonymous"
-    ></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/scripts.js"></script>
   </body>
 </html>

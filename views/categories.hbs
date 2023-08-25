@@ -1,35 +1,102 @@
-<div class="row">
-  <div class="col-md-12">
-    <h2>Categories
-      <a href="/categories/add" class="btn btn-success pull-right">Add Category</a></h2>
-    <hr />
+<section class="mt-8">
+  <div class="container pb-6 d-flex justify-content-center align-items-center">
+    <div class="row w-100 justify-content-center">
+      <div class="col col-md-9">
 
-    <div class="table-responsive">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Category ID</th>
-            <th scope="col">Category Name</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each categories}}
-            <tr>
-              <td><a href="/posts?category={{id}}">{{id}}</a></td>
-              <td><a href="/posts?category={{id}}">{{category}}</a></td>
-              <td><a
-                  href="categories/delete/{{id}}"
-                  class="btn btn-danger"
-                >remove</a></td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
+        <div class="d-flex align-items-center mx-auto mb-3 gap-2">
+          <h4 class="m-0">Options:</h4>
+          <div>
+            <a href="/categories/add" class="btn btn-primary m-1">
+              Add |
+              <i class="fas fa-plus"></i></a>
+            <button
+              class="btn btn-secondary m-1 text-white"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#other"
+              aria-expanded="false"
+              aria-controls="collapseExample"
+            >
+              All
+            </button>
+
+          </div>
+        </div>
+
+        <div class="border border-secondary shadow-sm">
+          <table class="table table-hover table-striped m-0">
+            <thead class="table-secondary">
+              <tr class="text-center fs-5">
+                <th scope="col" class="text-white">Category ID</th>
+                <th scope="col" class="text-white">Category Name</th>
+                <th scope="col" class="text-white">Remove</th>
+              </tr>
+            </thead>
+
+            <tbody class="text-center">
+              {{! User Category }}
+              {{#each categories}}
+                {{#if userOrigin}}
+                  <tr class="text-center align-middle">
+                    <td>
+                      <a
+                        href="/posts?category={{id}}"
+                        class="btn fs-5 text-dark"
+                      >{{id}}</a>
+                    </td>
+                    <td>
+                      <a
+                        href="/posts?category={{id}}"
+                        class="btn text-dark"
+                      >{{category}}</a>
+                    </td>
+                    <td class="align-middle">
+                      <a href="categories/delete/{{id}}" class="btn btn-danger">
+                        <i class="fas fa-circle-xmark"></i>
+                      </a>
+                    </td>
+                  </tr>
+                {{/if}}
+              {{/each}}
+
+              {{! Not User Made Categories }}
+              {{#each categories}}
+                {{#unless userOrigin}}
+                  <tr class="collapse text-center align-middle" id="other">
+                    <td>
+                      <a
+                        href="/posts?category={{id}}"
+                        class="btn fs-5 text-sdark"
+                      >{{id}}</a>
+                    </td>
+                    <td>
+                      <a
+                        href="/posts?category={{id}}"
+                        class="btn text-dark"
+                      >{{category}}</a>
+                    </td>
+                    <td>
+                      <a
+                        class="btn btn-danger disabled"
+                        href="categories/delete/{{id}}"
+                      >
+                        <i class="fas fa-ban"></i>
+                      </a>
+                    </td>
+                  </tr>
+                {{/unless}}
+              {{/each}}
+
+            </tbody>
+
+          </table>
+          {{#unless categories}}
+            <div class="text-center p-3">
+              <strong>No Result Found</strong>
+            </div>
+          {{/unless}}
+        </div>
+      </div>
     </div>
   </div>
-  {{#unless categories}}
-    <div class="col-md-12 text-center">
-      <strong>no results</strong>
-    </div>
-  {{/unless}}
-</div>
+</section>
