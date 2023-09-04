@@ -1,6 +1,7 @@
 require("dotenv").config();
 const authData = require("./auth-service.js");
-const clientSessions = require("client-sessions");
+// const clientSessions = require("client-sessions");
+const session = require("express-session");
 const express = require("express");
 const app = express();
 const exphbs = require("express-handlebars");
@@ -31,13 +32,14 @@ app.use(function (req, res, next) {
 // static folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// client-sessions configuration
 app.use(
-  clientSessions({
-    cookieName: "session", // object name that will be added to 'req'
+  session({
     secret: process.env.SESSION_SECRET,
-    duration: 15 * 60 * 1000,
-    activeDuration: 5 * 60 * 1000,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    },
   })
 );
 
