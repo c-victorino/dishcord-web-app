@@ -41,8 +41,9 @@ app.use(
   })
 );
 
-// used to conditionally hide/show elements to the user
-// depending on whether they're currently logged in
+// Middleware to make session data available to Handlebars templates
+// This middleware sets 'res.locals.session' to the user's session object,
+// allowing access to user related data in hbs views templates.
 app.use((req, res, next) => {
   res.locals.session = req.session;
   next();
