@@ -84,8 +84,10 @@
                       >{{category}}</a>
                     </td>
                     <td>{{published}}</td>
-                    <td>{{#formatDate postDate}}{{/formatDate}}</td>
-                    <td>{{#if lastUpdate}} {{lastUpdate}} {{else}}
+                    <td>{{#formatDate createdAt}}{{/formatDate}}</td>
+                    <td>{{#if isUpdated}}
+                        {{#formatDate updatedAt}}{{/formatDate}}
+                      {{else}}
                         Original{{/if}}</td>
                     <td>
                       <a class="btn btn-danger disabled" href="#">

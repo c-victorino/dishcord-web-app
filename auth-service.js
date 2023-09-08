@@ -49,7 +49,6 @@ async function initialize() {
  * @throws {Error} If passwords do not match, username is taken, or other error during registration
  */
 async function registerUser(userData) {
-  console.log(userData);
   // Check if passwords match
   if (userData.password !== userData.password2) {
     throw new Error("Passwords do not match");
@@ -79,7 +78,6 @@ async function registerUser(userData) {
  * @throws {Error} If no user is found, password is incorrect, or error during process.
  */
 async function checkUser(userData) {
-  console.log(userData);
   try {
     // check if user in the database
     const user = await User.findOne({ userName: userData.userName });

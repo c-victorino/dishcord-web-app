@@ -1,6 +1,5 @@
 require("dotenv").config();
 const authData = require("./auth-service.js");
-// const clientSessions = require("client-sessions");
 const session = require("express-session");
 const express = require("express");
 const app = express();
@@ -74,6 +73,7 @@ const safeHTML = function (context) {
 // formatDate to keep dates formatting consistent in views.
 // {{#formatDate postDate}}{{/formatDate}}
 const formatDate = function (dateObj) {
+  console.log(dateObj);
   const year = dateObj.getFullYear();
   const month = (dateObj.getMonth() + 1).toString();
   const day = dateObj.getDate().toString();
@@ -111,7 +111,7 @@ cloudinary.config({
 });
 
 // multer setup
-const upload = multer(); // no { storage: storage } since we are not using disk storage
+const upload = multer(); // no { storage: storage } since not using disk storage
 
 // checks if a user is logged in. Can be used in any route that
 // needs to be protected against unauthenticated access
@@ -120,12 +120,8 @@ function ensureLogin(req, res, next) {
 }
 
 // routes
-// home route
+// Redirect to the "/home" page
 app.get("/", (req, res) => res.redirect("/home"));
-
-// app.get("/home", (req, res) => {
-//   res.render("home", { enable: true });
-// });
 
 app.get("/home", async (req, res) => {
   let viewData = {};
@@ -154,13 +150,11 @@ app.get("/home", async (req, res) => {
   res.render("home", { enable: true, view: viewData });
 });
 
-// route about
-// app.get("/about", (req, res) => res.render("about"));
-
 // route blog
 app.get("/blog", async (req, res) => {
-  // Object to store properties for the view
+  // Initialize view data object
   let viewData = {};
+
   // Pagination setup
   const postPerPage = 6;
   const currentPage = req.query.page || 1;
@@ -169,7 +163,7 @@ app.get("/blog", async (req, res) => {
   viewData.currentPage = currentPage;
   viewData.qCategory = qCategory;
 
-  // Determine the number of pages needed for the views
+  // Determine total number of pages for pagination
   try {
     const totalPage = await blogService.getPaginationPageCount(
       postPerPage,
@@ -180,10 +174,10 @@ app.get("/blog", async (req, res) => {
       viewData.totalPage = totalPage;
     }
   } catch (err) {
-    viewData.pageMessage = "unable to determine needed pages";
+    viewData.pageMessage = "Unable to determine needed pages";
   }
 
-  // Post Pagination
+  // Retrieve paginated posts
   try {
     const posts = qCategory
       ? await blogService.getPaginatedPostByCategory(
@@ -192,72 +186,89 @@ app.get("/blog", async (req, res) => {
           currentPage
         )
       : await blogService.getPaginatedPost(postPerPage, currentPage);
-    // store's the "posts" data in the viewData object (to be passed to the view)
+
     viewData.posts = posts;
   } catch (err) {
-    viewData.postMessage = "no results";
+    viewData.postMessage = "No results";
   }
 
+  // Retrieve and sort categories alphabetically
   try {
-    // Obtain the full list of "categories"
     const categories = await blogService.getCategories();
-    // sort into alphabetical order
     categories.sort((a, b) => a.category.localeCompare(b));
-    // store's the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
   } catch (err) {
     viewData.categoriesErrMessage = "No Categories";
   }
-  // render the "blog" view with all of the data (viewData)
+
+  // Render the "blog" view with view data
   res.render("blog", { data: viewData });
 });
 
-// route posts / post
-app.get("/posts", ensureLogin, (req, res) => {
-  const userId = req.session.user.id.toString();
-  const category = req.query.category;
-  const minDateStr = req.query.minDate;
+// Handle GET request to "/posts" route with authentication
+app.get("/posts", ensureLogin, async (req, res) => {
+  try {
+    // Get the user ID from the session
+    const userId = req.session.user.id;
+    // Extract query parameters for filtering posts
+    const category = req.query.category;
+    const minDateStr = req.query.minDate;
+    // Fetch all posts associated with the user
+    const allPosts = await blogService.getAllPosts(userId);
 
-  blogService
-    .getAllPosts(userId)
-    .then((data) => {
-      if (category) {
-        return blogService.getPostsByCategory(category, userId);
-      } else if (minDateStr) {
-        return blogService.getPostsByMinDate(minDateStr, userId);
-      } else {
-        return Promise.resolve(data);
-      }
-    })
-    .then((result) => {
-      if (!result.length) {
-        return Promise.reject("no results");
-      }
-      res.render("posts", { posts: result });
-    })
-    .catch((err) => res.render("posts", { message: err }));
+    let filteredPosts = allPosts;
+
+    // Filter posts by category if category is specified in the query
+    if (category) {
+      filteredPosts = await blogService.getPostsByCategory(category, userId);
+    }
+    // Filter posts by minimum date if minDateStr is specified in the query
+    else if (minDateStr) {
+      filteredPosts = await blogService.getPostsByMinDate(minDateStr, userId);
+    }
+
+    // If no results are found, reject the promise with an error message
+    if (!filteredPosts.length) {
+      return Promise.reject("no results");
+    }
+
+    // Render the "posts" template with the filtered posts data
+    res.render("posts", { posts: filteredPosts });
+  } catch (error) {
+    res.render("posts", { message: error });
+  }
 });
 
-app.get("/post/:id", ensureLogin, (req, res) => {
-  blogService
-    .getPostById(req.params.id)
-    .then((result) => res.json(result))
-    .catch((err) => res.json({ message: err }));
+// Handle GET request to "/post/:id" route with authentication
+app.get("/post/:id", ensureLogin, async (req, res) => {
+  try {
+    // Attempt to asynchronously fetch a post by ID from the blogService
+    const post = await blogService.getPostById(req.params.id);
+    // Send a JSON response with the retrieved post data
+    res.json(post);
+  } catch (error) {
+    // If an error occurs during the process, send a JSON response with an error message
+    res.json({ message: error });
+  }
 });
 
-app.get("/posts/add", ensureLogin, (req, res) => {
-  blogService
-    .getCategories()
-    .then((data) => res.render("addPost", { categories: data }))
-    .catch((err) => res.render("addPost", { categories: [] }));
+// Handle GET request to "/posts/add"
+app.get("/posts/add", ensureLogin, async (req, res) => {
+  try {
+    const categories = await blogService.getCategories();
+    res.render("addPost", { categories });
+  } catch (error) {
+    res.render("addPost", { categories: [] });
+  }
 });
 
+// To DO..
 app.post(
   "/posts/add",
   ensureLogin,
   upload.single("featureImage"),
   (req, res) => {
-    const userId = req.session.user.id.toString();
+    const userId = req.session.user.id;
     if (req.file) {
       let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
@@ -292,140 +303,171 @@ app.post(
   }
 );
 
+// Handle the route for editing a post by ID, ensuring the user is logged in
 app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
   try {
-    const userId = req.session.user.id.toString();
+    const userId = req.session.user.id;
     const postId = req.params.id;
-
-    // Fetch post by ID
+    // Retrieve the post by ID
     const post = await blogService.getPostById(postId);
-
-    // Fetch categories
     const categories = await blogService.getCategories(userId);
-
-    // Render the template with the fetched post and categories
     res.render("addPost", { update: post, categories: categories, postId });
   } catch (err) {
     res.status(500).send(err);
   }
 });
 
+// Handle the route for editing a post by ID, ensuring the user is logged in
+// TO DO..
 app.post(
   "/posts/edit/:id",
   ensureLogin,
   upload.single("featureImage"),
-  (req, res) => {
-    blogService
-      .getPostOrigin(req.params.id)
-      .then((origin) => {
-        const userId = req.session.user.id.toString();
-        if (origin === userId) {
-          blogService
-            .updatePost(req.params.id, req.body)
-            .then(() => res.redirect("/posts"));
-        }
-      })
-      .catch((err) => console.log("Error in Update Post Root"));
+  async (req, res) => {
+    try {
+      const userId = req.session.user.id;
+      // Retrieve the original post's user ID for authorization
+      const postOrigin = await blogService.getPostOrigin(req.params.id);
+      // Check if user is the author of the post
+      if (postOrigin === userId) {
+        console.log(req.file);
+        console.log(req.body);
 
-    // res.status(403).render("403");
+        if (req.file) {
+        }
+
+        // Update the post by ID with the provided data
+        await blogService.updatePost(req.params.id, req.body);
+        res.redirect("/posts");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 );
 
-app.get("/posts/delete/:id", ensureLogin, (req, res) => {
-  const userId = req.session.user.id.toString();
-  blogService
-    .deletePostById(req.params.id, userId)
-    .then(() => res.redirect("/posts"))
-    .catch((err) => res.status(500).send(err));
+// Handle the route for deleting a post by ID
+app.get("/posts/delete/:id", ensureLogin, async (req, res) => {
+  try {
+    // Get the user's ID from the session
+    const userId = req.session.user.id;
+    // Delete the post by ID, passing the user's ID for authorization
+    await blogService.deletePostById(req.params.id, userId);
+    res.redirect("/posts");
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
-// route categories
-app.get("/categories", ensureLogin, (req, res) => {
-  blogService
-    .getCategories(req.session.user.id)
-    .then((data) => {
-      if (!data.length) {
-        return Promise.reject("no results");
-      }
-      res.render("categories", { categories: data });
-    })
-    .catch((err) => res.render("categories", { message: err }));
+// Route handler for displaying the list of categories, also ensuring the user is logged in
+app.get("/categories", ensureLogin, async (req, res) => {
+  try {
+    // Get the user's ID from the session
+    const userId = req.session.user.id;
+    // Retrieve the list of categories
+    const categoryList = await blogService.getCategories(userId);
+    if (!categoryList.length) {
+      return Promise.reject("no results");
+    }
+    res.render("categories", { categories: categoryList });
+  } catch (err) {
+    res.render("categories", { message: err });
+  }
 });
 
+// Render the "addCategory" page with authentication check
 app.get("/categories/add", ensureLogin, (req, res) =>
   res.render("addCategory")
 );
 
-app.post("/categories/add", ensureLogin, (req, res) => {
-  const userId = req.session.user.id.toString();
-  blogService
-    .addCategory(req.body, userId)
-    .then(() => res.redirect("/categories"))
-    .catch((err) => res.json({ message: err }));
+// Post route to handle adding new category
+app.post("/categories/add", ensureLogin, async (req, res) => {
+  try {
+    // Get the user's ID from the session
+    const userId = req.session.user.id;
+    // Add new category with the provided data and user ID
+    await blogService.addCategory(req.body, userId);
+    res.redirect("/categories");
+  } catch (err) {
+    res.json({ message: err });
+  }
 });
 
-app.get("/categories/delete/:id", ensureLogin, (req, res) => {
-  const userId = req.session.user.id.toString();
-  blogService
-    .deleteCategoryById(req.params.id, userId)
-    .then(() => res.redirect("/categories"))
-    .catch((err) => res.status(500).send(err));
+// GET route to handle the deletion of a category by ID
+app.get("/categories/delete/:id", ensureLogin, async (req, res) => {
+  try {
+    // Get the user's ID from the session
+    const userId = req.session.user.id;
+    // Delete the category by ID, and pass the user's ID for authorization
+    await blogService.deleteCategoryById(req.params.id, userId);
+    res.redirect("/categories");
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
-// route login
+// Render the "login" page
 app.get("/login", (req, res) => res.render("login"));
 
-app.post("/login", (req, res) => {
-  // req.body.userAgent = req.get("User-Agent");
-  authData
-    .checkUser(req.body)
-    .then((user) => {
-      req.session.user = {
-        id: user._id.toString(),
-        userName: user.userName,
-        email: user.email,
-        loginHistory: user.loginHistory,
-      };
-
-      res.redirect("/posts");
-    })
-    .catch((err) =>
-      res.render("login", { errorMessage: err, userName: req.body.userName })
-    );
+// POST route to handle user login
+app.post("/login", async (req, res) => {
+  try {
+    // Authenticate the user using provided credentials
+    const user = await authData.checkUser(req.body);
+    // If authentication is successful, create a session
+    req.session.user = {
+      id: user._id.toString(),
+      userName: user.userName,
+      email: user.email,
+      loginHistory: user.loginHistory,
+    };
+    res.redirect("/posts");
+  } catch (err) {
+    res.render("login", { errorMessage: err, userName: req.body.userName });
+  }
 });
 
-// route logout
+// Route for logging out a user
 app.get("/logout", (req, res) => {
+  // Remove session data associated with the user's session
   req.session.destroy();
+  // Redirect the user to the home page after logging out
   res.redirect("/");
 });
 
-// route userHistory
+// Render userHistory view for current authenticated user
 app.get("/userHistory", ensureLogin, (req, res) => res.render("userHistory"));
 
-// route register
+// Render "register" template when GET request is made to "/register"
 app.get("/register", (req, res) => res.render("register"));
 
-app.post("/register", (req, res) => {
-  authData
-    .registerUser(req.body)
-    .then(() => res.render("register", { successMessage: "User created" }))
-    .catch((err) =>
-      res.render("register", { errorMessage: err, userName: req.body.userName })
-    );
+// Handle registration form submission via POST request
+app.post("/register", async (req, res) => {
+  try {
+    // Attempt to register user with data from request body
+    const result = await authData.registerUser(req.body);
+    // If successful, render the register view with success message
+    res.render("register", { successMessage: result });
+  } catch (err) {
+    res.render("register", { errorMessage: err, userName: req.body.userName });
+  }
 });
 
-// handle unknown routes
+// Middleware for handling 404 errors and rendering 404 page
 app.use((req, res) => res.status(404).render("404"));
 
-// server start
-blogService
-  .initialize()
-  .then(authData.initialize)
-  .then((result) =>
+// Initialize services and start the Express server.
+(async () => {
+  try {
+    // Initialize the blogService to set up database connections and models.
+    await blogService.initialize();
+    // Initialize authData service, which sets up authentication related configurations.
+    await authData.initialize();
     app.listen(
       HTTP_PORT,
-      console.log("Express http server listening on " + HTTP_PORT)
-    )
-  )
-  .catch((error) => console.log(error));
+      console.log("Express http server listening on", HTTP_PORT)
+    );
+  } catch (err) {
+    console.error("Error occurred:", err);
+  }
+})();
