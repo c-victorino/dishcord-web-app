@@ -2,7 +2,8 @@ require("dotenv").config();
 const NO_RESULTS = "no results returned"; // reject message
 const Sequelize = require("sequelize");
 
-// set up sequelize to point to a postgres database
+// Initialize Sequelize with provided connection string and options.
+// Uses ElephantSQL connection string
 const sequelize = new Sequelize(process.env.ELEPHANTSQL_CONNECTION_STRING, {
   dialectOptions: {
     ssl: { rejectUnauthorized: false },
@@ -11,7 +12,7 @@ const sequelize = new Sequelize(process.env.ELEPHANTSQL_CONNECTION_STRING, {
   logging: false,
 });
 
-// Data Model
+// Defines the Post model with Sequelize
 const Post = sequelize.define("Post", {
   body: Sequelize.TEXT,
   title: Sequelize.STRING,
@@ -24,48 +25,38 @@ const Post = sequelize.define("Post", {
   userOrigin: Sequelize.STRING,
 });
 
-// Data Model
+// Defines Category model with Sequelize.
 const Category = sequelize.define("Category", {
   category: Sequelize.STRING,
   userOrigin: Sequelize.STRING,
 });
 
-// Post model gets a "category" column that will act as
-// a foreign key to the Category model
+// Define the relationship between Post and Category models.
+// Associates category field in Post with the Category model.
 Post.belongsTo(Category, { foreignKey: "category" });
 
-// ensure that we can connect to the DB and that our Post and
-// Category models are represented in the database as tables
-function initialize() {
-  return new Promise((resolve, reject) => {
-    sequelize
-      .sync()
-      .then(() => resolve())
-      .catch((err) => reject("unable to sync the database"));
-  });
+// Initializes the database by synchronizing Sequelize models.
+async function initialize() {
+  try {
+    await sequelize.sync();
+  } catch (err) {
+    throw new Error("unable to sync the database");
+  }
 }
 
-// retrieves all posts from the PostgreSQL database
-function getAllPosts(userId) {
-  return new Promise((resolve, reject) => {
-    Post.findAll()
-      .then((posts) => {
-        posts.forEach((post) => (post.userOrigin = post.userOrigin === userId));
-        resolve(posts);
-      })
-      .catch((err) => reject(NO_RESULTS));
-  });
-}
-
-// gets all post who's published val is set to true
-function getPublishedPosts() {
-  return new Promise((resolve, reject) => {
-    Post.findAll({
-      where: { published: true },
-    })
-      .then((data) => resolve(data))
-      .catch((err) => reject("unable to create post"));
-  });
+/**
+ * Fetches all posts and modifies their 'userOrigin' property based on the provided userId.
+ * @param {string} userId - The user ID to compare against 'userOrigin' property.
+ * @returns {Promise<Array>} A promise that resolves to an array of modified posts.
+ */
+async function getAllPosts(userId) {
+  try {
+    const posts = await Post.findAll();
+    posts.forEach((post) => (post.userOrigin = post.userOrigin === userId));
+    return posts;
+  } catch (err) {
+    throw new Error(NO_RESULTS);
+  }
 }
 
 // Retrieves all categories from the PostgreSQL database
@@ -126,21 +117,6 @@ function getPostById(id) {
       where: { id },
     })
       .then((data) => resolve(data[0]))
-      .catch((err) => reject(NO_RESULTS));
-  });
-}
-
-// filter the results by "published" & "category"
-// (using the value true for "published" & the value passed to the function
-function getPublishedPostsByCategory(category) {
-  return new Promise((resolve, reject) => {
-    Post.findAll({
-      where: {
-        published: true,
-        category: category,
-      },
-    })
-      .then((data) => resolve(data))
       .catch((err) => reject(NO_RESULTS));
   });
 }
@@ -297,19 +273,16 @@ async function getPostCount() {
 module.exports = {
   initialize,
   getAllPosts,
-  getPublishedPosts,
   getCategories,
   getPostsByCategory,
   getPostsByMinDate,
   getPostById,
-  getPublishedPostsByCategory,
   addPost,
   addCategory,
   deleteCategoryById,
   deletePostById,
   getPostOrigin,
   updatePost,
-
   getPaginationPageCount,
   getPaginatedPostByCategory,
   getPaginatedPost,

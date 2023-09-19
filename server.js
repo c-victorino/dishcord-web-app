@@ -28,7 +28,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-// static folder
+// Serve static folder
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
@@ -50,18 +50,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Handlebars configuration and helper functions
 // automatically generates correct <li> element and adds class "active" if provided URL matches active route.
 // {{#navLink "/about"}}About{{/navLink}}
-const navLink = function (url, options) {
-  return (
-    `<li class="nav-item">` +
-    `<a href="${url}"` +
-    (url == app.locals.activeRoute
-      ? ' class="nav-link active " '
-      : ' class="nav-link" ') +
-    `>${options.fn(this)}</a></li>`
-  );
+const navLink = (url, options) => {
+  const isActive = url === app.locals.activeRoute;
+  const navClass = isActive ? "active" : "";
+
+  return `
+    <li class="nav-item">
+      <a href="${url}" class="nav-link ${navClass}">
+        ${options.fn(this)}
+      </a>
+    </li>
+  `;
 };
 
 // removes unwanted JavaScript code from post body string by using a custom package: strip-js
@@ -70,15 +71,9 @@ const safeHTML = function (context) {
   return stripJs(context);
 };
 
-// formatDate to keep dates formatting consistent in views.
+// Keep date formatting consistent in views.
 // {{#formatDate postDate}}{{/formatDate}}
-const formatDate = function (dateObj) {
-  console.log(dateObj);
-  const year = dateObj.getFullYear();
-  const month = (dateObj.getMonth() + 1).toString();
-  const day = dateObj.getDate().toString();
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-};
+const formatDate = (dateObj) => dateObj.toISOString().slice(0, 10);
 
 const ifEquals = function (arg1, arg2, options) {
   if (arg1 === arg2) {
@@ -100,6 +95,7 @@ app.engine(
   })
 );
 
+// Sets view engine to use Handlebars for rendering dynamic templates
 app.set("view engine", ".hbs");
 
 // cloudinary configuration
@@ -110,8 +106,8 @@ cloudinary.config({
   secure: true,
 });
 
-// multer setup
-const upload = multer(); // no { storage: storage } since not using disk storage
+// multer instance for handling file uploads
+const upload = multer(); // not using disk storage
 
 // checks if a user is logged in. Can be used in any route that
 // needs to be protected against unauthenticated access
@@ -119,7 +115,8 @@ function ensureLogin(req, res, next) {
   !req.session.user ? res.redirect("/login") : next();
 }
 
-// routes
+// Routes
+//
 // Redirect to the "/home" page
 app.get("/", (req, res) => res.redirect("/home"));
 
@@ -262,46 +259,47 @@ app.get("/posts/add", ensureLogin, async (req, res) => {
   }
 });
 
-// To DO..
+// Handle the HTTP POST request for adding a new post
 app.post(
   "/posts/add",
   ensureLogin,
-  upload.single("featureImage"),
-  (req, res) => {
-    const userId = req.session.user.id;
-    if (req.file) {
-      let streamUpload = (req) => {
-        return new Promise((resolve, reject) => {
-          let stream = cloudinary.uploader.upload_stream((error, result) => {
-            result ? resolve(result) : reject(error);
-          });
+  upload.single("featureImage"), // Handle file upload for a feature image
+  async (req, res) => {
+    try {
+      // Extract the user ID from the session
+      const userId = req.session.user.id;
 
-          streamifier.createReadStream(req.file.buffer).pipe(stream);
-        });
-      };
-
-      async function upload(req) {
-        let result = await streamUpload(req);
-        return result;
+      // If a file was uploaded, process and store it
+      if (req.file) {
+        const uploaded = await uploadImage(req.file.buffer);
+        req.body.featureImage = uploaded.url;
+      } else {
+        // No file uploaded, set featureImage to null
+        req.body.featureImage = null;
       }
 
-      upload(req).then((uploaded) => {
-        req.body.featureImage = uploaded.url;
-        blogService
-          .addPost(req.body, userId)
-          .then(() => res.redirect("/posts"))
-          .catch((err) => res.json({ message: err }));
-      });
-    } else {
-      // Handle the case when no image is uploaded
-      req.body.featureImage = null;
-      blogService
-        .addPost(req.body, userId)
-        .then(() => res.redirect("/posts"))
-        .catch((err) => res.json({ message: err }));
+      // Add the post to the blog service using the request body & user ID
+      await blogService.addPost(req.body, userId);
+      res.redirect("/posts");
+    } catch (err) {
+      res.json({ message: err });
     }
   }
 );
+
+function uploadImage(buffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream((error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
+
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+}
 
 // Handle the route for editing a post by ID, ensuring the user is logged in
 app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
@@ -317,30 +315,35 @@ app.get("/posts/edit/:id", ensureLogin, async (req, res) => {
   }
 });
 
-// Handle the route for editing a post by ID, ensuring the user is logged in
-// TO DO..
+// Handle the route for editing a post by ID
 app.post(
   "/posts/edit/:id",
-  ensureLogin,
-  upload.single("featureImage"),
+  ensureLogin, // Ensure the user is logged in before allowing access
+  upload.single("featureImage"), // Handle file upload for a feature image
   async (req, res) => {
     try {
+      // Extract the user ID from the session
       const userId = req.session.user.id;
-      // Retrieve the original post's user ID for authorization
-      const postOrigin = await blogService.getPostOrigin(req.params.id);
-      // Check if user is the author of the post
-      if (postOrigin === userId) {
-        console.log(req.file);
-        console.log(req.body);
 
+      // Get the original author's user ID for the post being edited
+      const postOrigin = await blogService.getPostOrigin(req.params.id);
+
+      // Check if the current user is the author of the post
+      if (postOrigin === userId) {
+        // If file was uploaded, store it
         if (req.file) {
+          const uploaded = await uploadImage(req.file.buffer);
+          req.body.featureImage = uploaded.url;
         }
 
-        // Update the post by ID with the provided data
+        // Update the post using the request body and post ID
         await blogService.updatePost(req.params.id, req.body);
+
+        // Redirect to the "/posts" page after successfully editing the post
         res.redirect("/posts");
       }
     } catch (err) {
+      // Handle any errors by logging them to the console
       console.error(err);
     }
   }
