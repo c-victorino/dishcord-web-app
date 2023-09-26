@@ -28,7 +28,7 @@ const Post = sequelize.define("Post", {
 // Defines Category model with Sequelize.
 const Category = sequelize.define("Category", {
   category: Sequelize.STRING,
-  userOrigin: Sequelize.STRING,
+  userOrigin: Sequelize.STRING, // use for identifying creator
 });
 
 // Define the relationship between Post and Category models.
@@ -52,103 +52,114 @@ async function initialize() {
 async function getAllPosts(userId) {
   try {
     const posts = await Post.findAll();
+    // Modify 'userOrigin' property of each post based on userId
     posts.forEach((post) => (post.userOrigin = post.userOrigin === userId));
+
+    return posts;
+  } catch (err) {
+    // Handle any errors and throw a custom error message if no results are found
+    throw new Error(NO_RESULTS);
+  }
+}
+
+// Retrieves all categories from the PostgreSQL database
+async function getCategories(userId) {
+  try {
+    const categories = await Category.findAll();
+    categories.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+
+    return categories;
+  } catch (err) {
+    throw new Error(NO_RESULTS);
+  }
+}
+
+// get post who's category value is the value passed to the function
+async function getPostsByCategory(category, userId) {
+  try {
+    const posts = await Post.findAll({
+      where: {
+        category,
+      },
+    });
+    posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+
     return posts;
   } catch (err) {
     throw new Error(NO_RESULTS);
   }
 }
 
-// Retrieves all categories from the PostgreSQL database
-function getCategories(userId) {
-  return new Promise((resolve, reject) => {
-    Category.findAll()
-      .then((categories) => {
-        // make true if user is the creator of the category
-        categories.forEach(
-          (obj) => (obj.userOrigin = obj.userOrigin === userId)
-        );
-
-        resolve(categories);
-      })
-      .catch((err) => reject(NO_RESULTS));
-  });
-}
-
-// get post who's category value is the value passed to the function
-function getPostsByCategory(category, userId) {
-  return new Promise((resolve, reject) => {
-    Post.findAll({
-      where: {
-        category,
-      },
-    })
-      .then((posts) => {
-        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
-        resolve(posts);
-      })
-      .catch((err) => reject(NO_RESULTS));
-  });
-}
-
 // get post that contains postDate value greater than or equal to the minDateStr
-function getPostsByMinDate(minDateStr) {
-  return new Promise((resolve, reject) => {
+async function getPostsByMinDate(minDateStr, userId) {
+  try {
     const { gte } = Sequelize.Op;
-    Post.findAll({
+    const posts = await Post.findAll({
       where: {
         postDate: {
           [gte]: new Date(minDateStr),
         },
       },
-    })
-      .then((posts) => {
-        posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
-        resolve(posts);
-      })
-      .catch((err) => reject(NO_RESULTS));
-  });
+    });
+    posts.forEach((obj) => (obj.userOrigin = obj.userOrigin === userId));
+
+    return posts;
+  } catch (err) {
+    throw new Error(NO_RESULTS);
+  }
 }
 
 // get post who's id value is the value passed to the function
-function getPostById(id) {
-  return new Promise((resolve, reject) => {
-    Post.findAll({
+async function getPostById(id) {
+  try {
+    const post = await Post.findOne({
       where: { id },
-    })
-      .then((data) => resolve(data[0]))
-      .catch((err) => reject(NO_RESULTS));
-  });
+    });
+
+    return post;
+  } catch (err) {
+    throw new Error(NO_RESULTS);
+  }
 }
 
 // create and saves the postData to a PostgreSQL database
-function addPost(postData, userId) {
-  return new Promise((resolve, reject) => {
+async function addPost(postData, userId) {
+  try {
     // Ensure value is correct when user toggled or not the
     // published property in the form
     postData.published = postData.published ? true : false;
+
+    // make any blank values be null when user did not input a value on a field
     for (let key in postData) {
-      // make any blank values be null when user did not input a value on a field
       if (postData[key] === "") {
         postData[key] = null;
       }
     }
-
-    // assign postDate val as current date when posted
-    postData.postDate = new Date();
     // assign userOrigin as the userID
     postData.userOrigin = userId;
 
-    Post.create(postData)
-      .then((data) => resolve(data))
-      .catch((err) => reject("unable to create post"));
-  });
+    const newPost = await Post.create(postData);
+
+    return newPost;
+  } catch (err) {
+    throw new Error("unable to create post");
+  }
 }
 
+/**
+ * Update a post with the specified data.
+ * @param {number} postId - The ID of the post to update.
+ * @param {object} postData - The data to update the post with.
+ */
 async function updatePost(postId, postData) {
   try {
+    // Set the 'isUpdated' field to true
     postData.isUpdated = true;
+
+    // Convert 'published' to a boolean value (true or false)
     postData.published = postData.published ? true : false;
+
+    // Update the post data in the database based on the post ID
     await Post.update(postData, { where: { id: postId } });
   } catch (err) {
     throw err;
@@ -156,39 +167,39 @@ async function updatePost(postId, postData) {
 }
 
 // create and saves the categoryData to a PostgreSQL database
-function addCategory(categoryData, userId) {
-  return new Promise((resolve, reject) => {
-    // adds the id of the creator of the category
-    categoryData.userOrigin = userId.toString();
-
-    Category.create(categoryData)
-      .then((data) => resolve(data))
-      .catch((err) => reject("unable to create category"));
-  });
+async function addCategory(categoryData, userId) {
+  try {
+    categoryData.userOrigin = userId;
+    const newCategory = await Category.create(categoryData);
+    return newCategory;
+  } catch (err) {
+    throw new Error("unable to create category");
+  }
 }
 
 // deletes specific category by its id
-function deleteCategoryById(id, userId) {
-  return new Promise((resolve, reject) => {
+async function deleteCategoryById(id, userId) {
+  try {
     Category.destroy({
       where: { id, userOrigin: userId },
-    })
-      .then(() => resolve("destroyed"))
-      .catch((err) => reject("Unable to Remove Category / Category not found"));
-  });
+    });
+  } catch (err) {
+    throw new Error("Unable to Remove Category / Category not found");
+  }
 }
 
 // deletes specific Post by its id
-function deletePostById(id, userId) {
-  return new Promise((resolve, reject) => {
+async function deletePostById(id, userId) {
+  try {
     Post.destroy({
       where: { id, userOrigin: userId },
-    })
-      .then(() => resolve("destroyed"))
-      .catch((err) => reject("Unable to Remove Post / Post not found"));
-  });
+    });
+  } catch (err) {
+    throw new Error("Unable to Remove Post / Post not found");
+  }
 }
 
+// Retrieve and return the original author's user ID for a specific post.
 async function getPostOrigin(postId) {
   try {
     const origin = await Post.findByPk(postId, {
@@ -198,27 +209,49 @@ async function getPostOrigin(postId) {
   } catch (err) {}
 }
 
+/**
+ * Calculate and return an array of page numbers for pagination.
+ * @param {number} postPerPage - The number of posts displayed per page.
+ * @param {string|null} category - Optional category filter for counting posts.
+ */
 async function getPaginationPageCount(postPerPage, category) {
   try {
+    // Count the total number of posts, optionally filtered by category
     const total = category
       ? await Post.count({ where: { category: category } })
       : await Post.count();
 
+    // Initialize an array to store page numbers
     const pageNumbers = [];
 
-    const math = Math.ceil(total / postPerPage);
-    for (let i = 1; i <= math; i++) {
+    // Calculate the number of pages needed based on post count and per-page limit
+    const pageCount = Math.ceil(total / postPerPage);
+
+    // Generate an array of page numbers from 1 to pageCount
+    for (let i = 1; i <= pageCount; i++) {
       pageNumbers.push(i);
     }
+
+    // Return the array of page numbers
     return pageNumbers;
   } catch (err) {
     throw new Error("Error on calculating pagination page count");
   }
 }
 
+/**
+ * Retrieve and return a paginated list of published posts in a specific category.
+ * @param {string} category - The category to filter posts by.
+ * @param {number} postPerPage - The number of posts to display per page.
+ * @param {number} currentPage - The current page number.
+ * @returns {Promise<Array>} Array of paginated posts.
+ */
 async function getPaginatedPostByCategory(category, postPerPage, currentPage) {
+  // Calculate the offset based on the current page and posts per page
   const offset = (currentPage - 1) * postPerPage;
+
   try {
+    // Fetch paginated posts from the database, filtered by category and published status
     const posts = await Post.findAll({
       limit: postPerPage,
       offset: offset,
@@ -234,10 +267,14 @@ async function getPaginatedPostByCategory(category, postPerPage, currentPage) {
   }
 }
 
+// Retrieve and return a paginated list of published posts.
 async function getPaginatedPost(postPerPage, currentPage) {
+  // Calculate the offset based on the current page and posts per page
   const offset = (currentPage - 1) * postPerPage;
+
   try {
-    const posts = await Post.findAll({
+    // Fetch paginated posts from the database
+    const paginatedPosts = await Post.findAll({
       limit: postPerPage,
       offset: offset,
       where: {
@@ -246,12 +283,14 @@ async function getPaginatedPost(postPerPage, currentPage) {
       order: [["updatedAt", "DESC"]],
     });
 
-    return posts;
+    // Return the paginated posts
+    return paginatedPosts;
   } catch (err) {
     throw new Error("Error fetching paginated posts");
   }
 }
 
+// Retrieve and return the count of categories.
 async function getCategoryCount() {
   try {
     const categoryCount = await Category.count();
@@ -261,6 +300,7 @@ async function getCategoryCount() {
   }
 }
 
+// Retrieve and return the count of published posts.
 async function getPostCount() {
   try {
     const postCount = await Post.count({ where: { published: true } });
