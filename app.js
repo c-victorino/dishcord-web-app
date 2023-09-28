@@ -3,9 +3,8 @@ const exphbs = require("express-handlebars");
 const path = require("path");
 const session = require("express-session");
 
-const stripJs = require("strip-js");
-
 const app = express();
+const hbsHelpers = require("./helpers/handlebars-helpers");
 const authRoutes = require("./routes/authRoutes.js");
 const publicRoutes = require("./routes/publicRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
@@ -51,48 +50,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// automatically generates correct <li> element and adds class "active" if provided URL matches active route.
-// {{#navLink "/about"}}About{{/navLink}}
-const navLink = (url, options) => {
-  const isActive = url === app.locals.activeRoute;
-  const navClass = isActive ? "active" : "";
-
-  return `
-    <li class="nav-item">
-      <a href="${url}" class="nav-link ${navClass}">
-        ${options.fn(this)}
-      </a>
-    </li>
-  `;
-};
-
-// removes unwanted JavaScript code from post body string by using a custom package: strip-js
-// {{#safeHTML someString}}{{/safeHTML}}
-const safeHTML = function (context) {
-  return stripJs(context);
-};
-
-// Keep date formatting consistent in views.
-// {{#formatDate postDate}}{{/formatDate}}
-const formatDate = (dateObj) => dateObj.toISOString().slice(0, 10);
-
-const ifEquals = function (arg1, arg2, options) {
-  if (arg1 === arg2) {
-    // Render content inside the {{#ifEquals}} block
-    return options.fn(this);
-  }
-};
-
 app.engine(
   ".hbs",
   exphbs.engine({
     extname: ".hbs",
-    helpers: {
-      navLink,
-      safeHTML,
-      formatDate,
-      ifEquals,
-    },
+    helpers: hbsHelpers, // Custom Helpers from import module
   })
 );
 
