@@ -102,6 +102,7 @@ async function checkUser(userData) {
 
     return user;
   } catch (err) {
+    console.log("crash Here");
     throw err;
   }
 }
