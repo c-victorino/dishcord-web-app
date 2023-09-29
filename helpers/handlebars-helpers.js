@@ -3,8 +3,8 @@ const stripJs = require("strip-js");
 module.exports = {
   // automatically generates correct <li> element and adds class "active" if provided URL matches active route.
   // {{#navLink "/about"}}About{{/navLink}}
-  navLink: (url, options) => {
-    const isActive = url === app.locals.activeRoute;
+  navLink: function (url, options) {
+    const isActive = url === this.activeRoute; // Use 'this' to access activeRoute
     const navClass = isActive ? "active" : "";
 
     return `
