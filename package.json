@@ -1,7 +1,7 @@
 {
-  "name": "web-blog-app",
-  "version": "1.0.0",
-  "description": "",
+  "name": "dish-cord",
+  "version": "2.0.0",
+  "description": "Web application for creating and managing blog posts",
   "main": "server.js",
   "scripts": {
     "compile:scss": "sass --no-source-map scss:public/css",
@@ -9,6 +9,9 @@
     "watch": "nodemon server.js",
     "dev": "concurrently \"npm run watch\" \"npm run watch:scss\"",
     "start": "npm run dev"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "author": "Carlo V.",
   "license": "ISC",
