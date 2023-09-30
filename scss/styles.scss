@@ -38,24 +38,26 @@ tbody {
 }
 
 /* Blog */
-.blog .card {
-  width: 19rem;
-  height: 30rem;
-}
+.blog {
+  .card {
+    width: 19rem;
+    height: 30rem;
+  }
 
-.blog .card-img-top {
-  width: 100%;
-  height: 20rem;
-  object-fit: cover;
-}
+  .card-img-top {
+    width: 100%;
+    height: 20rem;
+    object-fit: cover;
+  }
 
-.blog .scrollable-text {
-  max-height: 85vh;
-  overflow-y: auto; /* Add vertical scrollbar when content exceeds height */
-}
+  .scrollable-text {
+    max-height: 85vh;
+    overflow-y: auto; /* Add vertical scrollbar when content exceeds height */
+  }
 
-.blog .modal-img {
-  object-fit: cover;
-  max-height: 85vh;
-  width: 100%;
+  .modal-img {
+    object-fit: cover;
+    max-height: 85vh;
+    width: 100%;
+  }
 }

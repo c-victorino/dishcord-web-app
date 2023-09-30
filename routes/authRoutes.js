@@ -9,7 +9,6 @@ router.get("/login", (req, res) => res.render("login"));
 router.post("/login", async (req, res) => {
   try {
     // Authenticate the user using provided credentials
-    console.log(req.body);
     const user = await authData.checkUser(req.body);
 
     // If authentication is successful, create a session
@@ -20,8 +19,7 @@ router.post("/login", async (req, res) => {
       email: user.email,
       loginHistory: user.loginHistory,
     };
-    console.log("crash Here1");
-    res.redirect("/posts");
+    res.redirect("/blog");
   } catch (err) {
     res.render("login", { errorMessage: err, userName: req.body.userName });
   }
