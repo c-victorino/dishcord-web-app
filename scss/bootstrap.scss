@@ -2,7 +2,6 @@
 $font-family-sans-serif: "Playfair Display", serif;
 
 // Colors
-// $light: #daecf6;
 $light: #fcfcfc;
 $dark: #303633;
 $primary: #992e2f;
@@ -23,6 +22,7 @@ $body-color: $dark;
 
 // Spacing
 $spacer: 1rem !default;
+
 $spacers: (
   0: 0,
   1: $spacer * 0.25,

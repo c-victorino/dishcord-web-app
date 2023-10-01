@@ -22,7 +22,7 @@
           </div>
         </div>
 
-        <div class="border border-secondary shadow-sm">
+        <div class="border border-secondary shadow-sm table-responsive-lg">
           <table class="table table-hover table-striped m-0">
             <thead class="table-secondary">
               <tr class="text-center fs-5">
@@ -84,8 +84,10 @@
                       >{{category}}</a>
                     </td>
                     <td>{{published}}</td>
-                    <td>{{#formatDate postDate}}{{/formatDate}}</td>
-                    <td>{{#if lastUpdate}} {{lastUpdate}} {{else}}
+                    <td>{{#formatDate createdAt}}{{/formatDate}}</td>
+                    <td>{{#if isUpdated}}
+                        {{#formatDate updatedAt}}{{/formatDate}}
+                      {{else}}
                         Original{{/if}}</td>
                     <td>
                       <a class="btn btn-danger disabled" href="#">

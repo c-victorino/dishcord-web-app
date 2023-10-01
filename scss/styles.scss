@@ -36,3 +36,28 @@ tbody {
 .add-post textarea {
   border-color: var(--bs-secondary);
 }
+
+/* Blog */
+.blog {
+  .card {
+    width: 19rem;
+    height: 30rem;
+  }
+
+  .card-img-top {
+    width: 100%;
+    height: 20rem;
+    object-fit: cover;
+  }
+
+  .scrollable-text {
+    max-height: 85vh;
+    overflow-y: auto; /* Add vertical scrollbar when content exceeds height */
+  }
+
+  .modal-img {
+    object-fit: cover;
+    max-height: 85vh;
+    width: 100%;
+  }
+}
