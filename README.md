@@ -1,39 +1,51 @@
-![Professional Portfolio of Carlo Victorino](./web-blog.PNG)
+![Professional Portfolio of Carlo Victorino](./dish-cord-v2.jpeg)
 
-# Web Blog
+# DishCord
 
-The Web Blog Site is a full-stack web application that was develop as a learning process, to explore the depths of full-stack technologies. Note that it is not intended to be an actual service. The application allows registered users to create, view, and manage blog posts in a user-friendly interface, while unregistered visitors can freely browse all posts. It provides a seamless experience for both readers and registered writers, with features like user authentication, post creation, post categories, and a responsive layout.
+Dishcord is a web application designed to make culinary exploration a delightful experience.
+The site allows registered users to create, view, and manage there own posts in a user-friendly interface, while unregistered visitors can freely browse all posts.
 
-Visit the live project [here](https://zany-dove-baseball-cap.cyclic.app/about), which is hosted on Cyclic. Do allow a few seconds for the site to load as it is hosted on a free service.
+Explore the application by clicking [here](https://dish-cord.onrender.com). Do be patient for the initial spin up, as it's hosted on a free service, and may take up to a minute.
 
-## Technologies / Libraries
+## Technologies and Frameworks Used
 
-- bcryptjs
-- client-sessions
-- cloudinary
-- express
-- express-handlebars
+### Frontend Technologies:
+
 - JavaScript
-- mongoose
-- multer
+- Bootstrap 5
+- Handlebars.js
+- SCSS
+
+### Backend Technologies:
+
 - Node.js
-- pg
-- pg-hstore
-- sequelize
-- streamifier
-- strip-js
+- Express.js
+- Mongoose (MongoDB)
+- Sequelize (PostgreSQL)
 
-## Database / Media Management
+### Additional Libraries and Dependencies:
 
-- Database Hosting: ElephantSQL (PostgreSQL)
-- Database: MongoDB (NoSQL)
-- Media Management: Cloudinary
+- Streamifier
+- Express Session
+- Dotenv
 
-## Features
+### DB / Database Hosting:
 
-- User Registration and Authentication: Users can sign up and log in to access additional features like creating and deleting blog posts.
-- View All Posts: Unregistered visitors can view all blog posts without logging in.
-- Create, Read, and Delete Operations: Registered users can create new blog posts, read existing ones, and delete unwanted posts.
-- Post Categories: Blog posts can be categorized, allowing readers to filter and view posts by specific category.
-- Responsive Design: The site is designed to be responsive, adapting to various screen sizes and devices.
-- Dynamic Navigation: The navigation menu automatically highlights the active page, providing a visual indicator to users.
+- MongoDB
+- ElephantSQL
+
+### Media Management:
+
+- Cloudinary
+
+## Key Features
+
+- **User Registration and Authentication:** Users can easily sign up and log in to access enhanced features such as creating and managing posts and categories.
+
+- **Recipe Posting:** Registered users have full control over their food recipe posts, with the ability to create, read, update, and delete their own content.
+
+- **Accessible for All:** Unregistered visitors are welcome to explore the platform and view all posts without needing to log in.
+
+- **Post Categories:** Posts are intelligently categorized, enabling readers to filter and discover content based on specific categories of interest.
+
+- **Responsive Design:** The website is thoughtfully designed to offer an optimal user experience across various devices and screen sizes.

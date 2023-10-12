@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const blogService = require("../services/blog-service.js");
-
+const authData = require("../services/auth-service.js");
 // Redirect to the "/home" page
 router.get("/", (req, res) => res.redirect("/home"));
 
