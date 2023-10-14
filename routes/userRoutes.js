@@ -37,7 +37,7 @@ router.get("/posts", ensureLogin, async (req, res) => {
 
     // If no results are found, reject the promise with an error message
     if (!filteredPosts.length) {
-      return Promise.reject("no results");
+      throw new Error("no results");
     }
 
     // Render the "posts" template with the filtered posts data
@@ -169,7 +169,7 @@ router.get("/categories", ensureLogin, async (req, res) => {
     // Retrieve the list of categories
     const categoryList = await blogService.getCategories(userId);
     if (!categoryList.length) {
-      return Promise.reject("no results");
+      throw new Error("no results");
     }
     res.render("categories", { categories: categoryList });
   } catch (err) {

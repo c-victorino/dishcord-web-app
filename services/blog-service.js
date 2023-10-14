@@ -135,6 +135,10 @@ async function addPost(postData, userId) {
         postData[key] = null;
       }
     }
+
+    // Replace newline characters in the text with HTML line break elements <br>
+    postData.body = postData.body.replace(/\n/g, "<br>");
+
     // assign userOrigin as the userID
     postData.userOrigin = userId;
 
